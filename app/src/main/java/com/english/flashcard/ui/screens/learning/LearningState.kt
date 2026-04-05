@@ -1,0 +1,36 @@
+package com.english.flashcard.ui.screens.learning
+
+import com.english.flashcard.domain.model.Word
+
+sealed class LearningState {
+    object Loading : LearningState()
+    data class Empty(val type: LearningType) : LearningState()
+    data class Flashcard(
+        val word: Word,
+        val progress: String,
+        val isFlipped: Boolean = false
+    ) : LearningState()
+    data class Quiz(
+        val word: Word,
+        val options: List<String>,
+        val progress: String,
+        val selectedIndex: Int? = null,
+        val correctIndex: Int? = null,
+        val isCorrect: Boolean? = null,
+        val showFeedback: Boolean = false,
+        val encouragingMessage: String? = null
+    ) : LearningState()
+    data class Completed(
+        val totalWords: Int,
+        val correctCount: Int,
+        val accuracy: Float,
+        val durationSeconds: Int
+    ) : LearningState()
+}
+
+enum class LearningType(val value: String) {
+    Today("today"),
+    Review("review"),
+    WrongWords("wrong"),
+    Favorites("favorites")
+}
