@@ -90,10 +90,11 @@
 import json
 import sqlite3
 import os
+from datetime import datetime
 from pathlib import Path
 
 def convert():
-    # 1. 读取 JSON 文件
+    # 1. 读取 JSON 文件（JSON 是一个数组）
     with open('data/1-初中-顺序.json', 'r', encoding='utf-8') as f:
         words_data = json.load(f)
     
@@ -131,7 +132,8 @@ def convert():
         meaning = item['translations'][0]['translation'] if item.get('translations') else ''
         # 保留所有 phrases
         phrases = json.dumps(item.get('phrases', []), ensure_ascii=False)
-        created_at = int(datetime.now().timestamp() * 1000)
+        # 使用秒（与现有 Room mapper 兼容）
+        created_at = int(datetime.now().timestamp())
         
         records.append((
             word, '', meaning, '', 0, 0, 0, 0, None, None, created_at, phrases
@@ -156,7 +158,7 @@ def convert():
 ```kotlin
 @Database(
     entities = [WordEntity::class, DailyProgressEntity::class],
-    version = 2,  // 版本号递增
+    version = 2,  // 版本号递增（1 → 2）
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -173,9 +175,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                // 关键：使用预填充数据库
                 .createFromAsset("database/words.db")
-                // 如果需要迁移
                 .addMigrations(object : Migration(1, 2) {
                     override fun migrate(database: SupportSQLiteDatabase) {
                         database.execSQL("ALTER TABLE words ADD COLUMN phrases TEXT DEFAULT '[]'")
@@ -186,6 +186,12 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 ```
+
+**注意**：
+- `createFromAsset` **仅在数据库首次创建时**从 assets 复制数据库
+- 用户**升级 APK 时**（数据库已存在），`createFromAsset` 不会重新复制
+- 新词只会添加到**全新安装**的用户，已安装用户不会自动获得新词
+- 如需升级场景也添加新词，需额外实现 sync 逻辑
 
 ### 3.4 数据模型变更
 
@@ -239,9 +245,13 @@ data class Phrase(
 **WordMapper.kt 更新**:
 
 ```kotlin
-fun WordEntity.toWord(): Word {
-    val phraseList = try {
-        Json.decodeFromString<List<Phrase>>(phrases)
+// 在 WordRepositoryImpl.kt 中修改
+
+private val gson = Gson()
+
+fun WordEntity.toDomain(): Word {
+    val phraseList: List<Phrase> = try {
+        gson.fromJson(phrases, object : TypeToken<List<Phrase>>() {}.type) ?: emptyList()
     } catch (e: Exception) {
         emptyList()
     }
@@ -252,17 +262,28 @@ fun WordEntity.toWord(): Word {
         phonetic = phonetic,
         meaning = meaning,
         example = example,
-        isFavorite = isFavorite > 0,
-        isMastered = isMastered > 0,
+        isFavorite = isFavorite,
+        isMastered = isMastered,
         correctStreak = correctStreak,
         wrongCount = wrongCount,
-        lastReviewAt = lastReviewAt?.toLocalDateTime(),
-        nextReviewAt = nextReviewAt?.toLocalDateTime(),
-        createdAt = createdAt.toLocalDateTime(),
+        lastReviewAt = if (lastReviewAt != null && lastReviewAt > 0) {
+            LocalDateTime.ofEpochSecond(lastReviewAt, 0, ZoneOffset.UTC)
+        } else null,
+        nextReviewAt = if (nextReviewAt != null && nextReviewAt > 0) {
+            LocalDateTime.ofEpochSecond(nextReviewAt, 0, ZoneOffset.UTC)
+        } else null,
+        createdAt = if (createdAt > 0) {
+            LocalDateTime.ofEpochSecond(createdAt, 0, ZoneOffset.UTC)
+        } else LocalDateTime.now(),
         phrases = phraseList
     )
 }
 ```
+
+**注意**：
+- Room 自动将 Boolean 与 INTEGER (0/1) 转换，无需手动处理
+- timestamp 使用秒精度（与现有代码一致）
+- `Phrase` 数据类放在 `domain/model/Phrase.kt`
 
 ---
 
@@ -272,11 +293,12 @@ fun WordEntity.toWord(): Word {
 |------|------|------|
 | `scripts/convert_to_sqlite.py` | 新增 | JSON → SQLite 转换脚本 |
 | `app/src/main/assets/database/words.db` | 新增（构建时生成） | 预填充数据库 |
-| `app/src/main/java/.../data/local/database/entity/WordEntity.kt` | 修改 | 新增 phrases 字段 |
-| `app/src/main/java/.../domain/model/Word.kt` | 修改 | 新增 phrases 字段 |
-| `app/src/main/java/.../data/local/database/AppDatabase.kt` | 修改 | 配置 createFromAsset |
-| `app/src/main/java/.../data/repository/WordRepositoryImpl.kt` | 修改 | 更新 Mapper |
-| `app/build.gradle` | 修改 | 添加转换脚本任务 |
+| `app/src/main/java/.../domain/model/Phrase.kt` | 新增 | 短语数据类 |
+| `app/src/main/java/.../data/local/database/entity/WordEntity.kt` | 修改 | 新增 phrases TEXT 字段 |
+| `app/src/main/java/.../domain/model/Word.kt` | 修改 | 新增 phrases: List<Phrase> |
+| `app/src/main/java/.../data/local/database/AppDatabase.kt` | 修改 | version→2，配置 createFromAsset |
+| `app/src/main/java/.../data/repository/WordRepositoryImpl.kt` | 修改 | 更新 toDomain() mapper |
+| `app/build.gradle.kts` | 修改 | 添加转换脚本任务 |
 
 ---
 
