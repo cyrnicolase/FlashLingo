@@ -9,14 +9,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.english.flashcard.ui.screens.CompletionScreen
-import com.english.flashcard.ui.screens.FavoritesScreen
-import com.english.flashcard.ui.screens.HomeScreen
-import com.english.flashcard.ui.screens.LearningScreen
-import com.english.flashcard.ui.screens.LibraryScreen
-import com.english.flashcard.ui.screens.MeScreen
-import com.english.flashcard.ui.screens.OnboardingScreen
-import com.english.flashcard.ui.screens.SettingsScreen
+import com.english.flashcard.ui.screens.library.LibraryScreen
+import com.english.flashcard.ui.screens.favorites.FavoritesScreen
+import com.english.flashcard.ui.screens.me.MeScreen
 
 @Composable
 fun NavGraph(
