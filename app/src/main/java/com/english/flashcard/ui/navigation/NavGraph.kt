@@ -1,0 +1,80 @@
+package com.english.flashcard.ui.navigation
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.english.flashcard.ui.screens.CompletionScreen
+import com.english.flashcard.ui.screens.FavoritesScreen
+import com.english.flashcard.ui.screens.HomeScreen
+import com.english.flashcard.ui.screens.LearningScreen
+import com.english.flashcard.ui.screens.LibraryScreen
+import com.english.flashcard.ui.screens.MeScreen
+import com.english.flashcard.ui.screens.OnboardingScreen
+import com.english.flashcard.ui.screens.SettingsScreen
+
+@Composable
+fun NavGraph(
+    navController: NavHostController,
+    startDestination: String,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination
+        ) {
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen()
+        }
+        composable(Screen.Home.route) {
+            HomeScreen()
+        }
+        composable(Screen.Library.route) {
+            LibraryScreen()
+        }
+        composable(Screen.Favorites.route) {
+            FavoritesScreen()
+        }
+        composable(Screen.Me.route) {
+            MeScreen()
+        }
+        composable(
+            route = Screen.Learning.route,
+            arguments = listOf(
+                navArgument("learningType") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val learningType = backStackEntry.arguments?.getString("learningType") ?: "today"
+            LearningScreen(learningType = learningType)
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen()
+        }
+        composable(
+            route = Screen.Completion.route,
+            arguments = listOf(
+                navArgument("totalWords") { type = NavType.IntType },
+                navArgument("correctCount") { type = NavType.IntType },
+                navArgument("accuracy") { type = NavType.FloatType },
+                navArgument("duration") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val totalWords = backStackEntry.arguments?.getInt("totalWords") ?: 0
+            val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
+            val accuracy = backStackEntry.arguments?.getFloat("accuracy") ?: 0f
+            val duration = backStackEntry.arguments?.getLong("duration") ?: 0L
+            CompletionScreen(
+                totalWords = totalWords,
+                correctCount = correctCount,
+                accuracy = accuracy,
+                duration = duration
+            )
+        }
+    }
+}
