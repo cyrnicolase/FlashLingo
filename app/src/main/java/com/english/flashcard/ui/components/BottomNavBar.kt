@@ -31,25 +31,25 @@ fun BottomNavBar(navController: NavController) {
     val items = listOf(
         BottomNavItem(
             route = Screen.Home.route,
-            label = "Home",
+            label = "首页",
             selectedIcon = Icons.Filled.Home,
             unselectedIcon = Icons.Outlined.Home
         ),
         BottomNavItem(
             route = Screen.Library.route,
-            label = "Library",
+            label = "单词库",
             selectedIcon = Icons.Filled.LibraryBooks,
             unselectedIcon = Icons.Outlined.LibraryBooks
         ),
         BottomNavItem(
             route = Screen.Favorites.route,
-            label = "Favorites",
+            label = "收藏",
             selectedIcon = Icons.Filled.Favorite,
             unselectedIcon = Icons.Outlined.FavoriteBorder
         ),
         BottomNavItem(
             route = Screen.Me.route,
-            label = "Me",
+            label = "我的",
             selectedIcon = Icons.Filled.Person,
             unselectedIcon = Icons.Outlined.Person
         )

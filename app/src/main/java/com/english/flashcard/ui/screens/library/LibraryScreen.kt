@@ -54,7 +54,7 @@ fun LibraryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Library") },
+                title = { Text("单词库") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -84,8 +84,8 @@ fun LibraryScreen(
             } else if (uiState.groupedWords.isEmpty()) {
                 EmptyState(
                     emoji = "📚",
-                    title = "No words yet",
-                    message = "Start learning to build your library"
+                    title = "词汇库为空",
+                    message = "开始学习来构建你的词汇库"
                 )
             } else {
                 Row(
@@ -148,7 +148,7 @@ private fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text("Search words...") },
+        placeholder = { Text("搜索单词...") },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,

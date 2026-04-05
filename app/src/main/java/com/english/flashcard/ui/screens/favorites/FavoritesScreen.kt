@@ -41,12 +41,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.english.flashcard.ui.components.EmptyState
 import com.english.flashcard.ui.components.WordBottomSheet
 import com.english.flashcard.ui.components.WordCard
+import com.english.flashcard.ui.navigation.LearningType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
     viewModel: FavoritesViewModel = hiltViewModel(),
-    onStartReview: () -> Unit = {}
+    onNavigateToLearning: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState()
@@ -54,7 +55,7 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Favorites") },
+                title = { Text("收藏") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -93,8 +94,8 @@ fun FavoritesScreen(
             } else if (uiState.filteredWords.isEmpty()) {
                 EmptyState(
                     emoji = "❤️",
-                    title = "No favorites yet",
-                    message = "Add words to your favorites to see them here"
+                    title = "还没有收藏的单词",
+                    message = "点击单词详情中的收藏按钮来添加"
                 )
             } else {
                 LazyColumn(
@@ -117,7 +118,7 @@ fun FavoritesScreen(
 
                 if (uiState.filteredWords.isNotEmpty()) {
                     Button(
-                        onClick = onStartReview,
+                        onClick = { onNavigateToLearning(LearningType.Favorites.value) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
@@ -151,7 +152,7 @@ private fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text("Search favorites...") },
+        placeholder = { Text("搜索收藏...") },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -182,7 +183,7 @@ private fun LetterFilterChips(
         FilterChip(
             selected = selectedLetter == null,
             onClick = { onLetterSelect(null) },
-            label = { Text("All") },
+            label = { Text("全部") },
             colors = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                 selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer

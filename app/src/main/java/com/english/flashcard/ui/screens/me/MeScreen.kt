@@ -45,7 +45,7 @@ fun MeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Me") },
+                title = { Text("我的") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )

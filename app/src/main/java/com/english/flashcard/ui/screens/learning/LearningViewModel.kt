@@ -36,11 +36,14 @@ class LearningViewModel @Inject constructor(
     private var currentWord: Word? = null
 
     private val encouragingMessages = listOf(
-        "别灰心，再接再厉！",
-        "继续加油！你可以的！",
-        "错了也没关系，学习就是这样",
-        "保持积极，继续前进！",
-        "每天进步一点点"
+        "加油！再想想！",
+        "别灰心，继续加油！",
+        "这词有点难，记住了！",
+        "继续保持，你能行！",
+        "温故知新，再接再厉！",
+        "差一点就对了！",
+        "熟能生巧，多练几遍！",
+        "记忆需要反复，加油！"
     )
 
     fun startLearning(type: LearningType) {

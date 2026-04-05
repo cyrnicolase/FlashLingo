@@ -12,7 +12,7 @@ class UpdateWordAfterAnswerUseCase @Inject constructor(
         val now = LocalDateTime.now()
         val updatedWord = if (isCorrect) {
             val newStreak = word.correctStreak + 1
-            val isNowMastered = newStreak >= 3
+            val isNowMastered = newStreak >= 2
             val nextReview = calculateNextReview(newStreak, now)
             word.copy(
                 correctStreak = newStreak,
@@ -25,8 +25,9 @@ class UpdateWordAfterAnswerUseCase @Inject constructor(
             word.copy(
                 correctStreak = 0,
                 wrongCount = word.wrongCount + 1,
+                isMastered = false,
                 lastReviewAt = now,
-                nextReviewAt = now.plusHours(1)
+                nextReviewAt = now.plusDays(1)
             )
         }
         wordRepository.updateWord(updatedWord)

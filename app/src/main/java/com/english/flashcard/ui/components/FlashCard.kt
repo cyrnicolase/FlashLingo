@@ -1,6 +1,7 @@
 package com.english.flashcard.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ fun FlashCard(
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
+        animationSpec = tween(durationMillis = 300),
         label = "card_flip"
     )
 
@@ -45,7 +47,6 @@ fun FlashCard(
             .graphicsLayer {
                 this.cameraDistance = cameraDistance
                 rotationY = rotation
-                this.alpha = if (rotation > 90f) 0f else 1f
             }
             .clickable(onClick = onFlip),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),

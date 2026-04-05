@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.english.flashcard.ui.screens.onboarding.OnboardingScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +54,17 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    if (uiState.showOnboarding) {
+        OnboardingScreen(
+            onStartLearning = {
+                viewModel.dismissOnboarding()
+                onStartLearning()
+            },
+            onSkip = { viewModel.dismissOnboarding() }
+        )
+        return
+    }
 
     Scaffold(
         topBar = {

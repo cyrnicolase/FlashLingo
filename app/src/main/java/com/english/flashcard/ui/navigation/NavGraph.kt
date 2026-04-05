@@ -16,6 +16,7 @@ import com.english.flashcard.ui.screens.library.LibraryScreen
 import com.english.flashcard.ui.screens.me.MeScreen
 import com.english.flashcard.ui.screens.settings.SettingsScreen
 import com.english.flashcard.ui.screens.completion.CompletionScreen
+import com.english.flashcard.ui.screens.onboarding.OnboardingScreen
 
 @Composable
 fun NavGraph(
@@ -51,7 +52,11 @@ fun NavGraph(
                 LibraryScreen()
             }
             composable(Screen.Favorites.route) {
-                FavoritesScreen()
+                FavoritesScreen(
+                    onNavigateToLearning = { type ->
+                        navController.navigate(Screen.Learning.createRoute(type))
+                    }
+                )
             }
             composable(Screen.Me.route) {
                 MeScreen()

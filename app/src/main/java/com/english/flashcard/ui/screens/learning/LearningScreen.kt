@@ -200,16 +200,27 @@ private fun QuizContent(
         if (state.showFeedback) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            state.encouragingMessage?.let { message ->
+            if (state.isCorrect == true) {
                 Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
+                    text = "正确！",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                state.encouragingMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = onNext,
