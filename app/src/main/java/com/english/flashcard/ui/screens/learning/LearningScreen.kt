@@ -3,14 +3,20 @@ package com.english.flashcard.ui.screens.learning
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,13 +38,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.english.flashcard.ui.components.EmptyState
 import com.english.flashcard.ui.components.FlashCard
 import com.english.flashcard.ui.components.QuizOption
+import com.english.flashcard.ui.navigation.LearningType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearningScreen(
     learningType: String,
     onClose: () -> Unit,
-    onComplete: (Int, Int, Float, Int) -> Unit,
+    onComplete: (Int, Int, Float, Long) -> Unit,
     viewModel: LearningViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -51,7 +58,7 @@ fun LearningScreen(
     LaunchedEffect(state) {
         if (state is LearningState.Completed) {
             val completed = state as LearningState.Completed
-            onComplete(completed.totalWords, completed.correctCount, completed.accuracy, completed.durationSeconds)
+            onComplete(completed.totalWords, completed.correctCount, completed.accuracy, completed.durationSeconds.toLong())
         }
     }
 
@@ -89,14 +96,20 @@ fun LearningScreen(
                     FlashcardContent(
                         state = currentState,
                         onFlip = { viewModel.onFlashcardFlip() },
-                        onNext = { viewModel.onNextFlashcard() }
+                        onNext = { viewModel.onNextFlashcard() },
+                        onPrevious = { viewModel.onPreviousFlashcard() },
+                        isFavorite = currentState.word.isFavorite,
+                        onToggleFavorite = { viewModel.toggleFavorite() }
                     )
                 }
                 is LearningState.Quiz -> {
                     QuizContent(
                         state = currentState,
                         onSelectAnswer = { viewModel.onSelectAnswer(it) },
-                        onNext = { viewModel.onNextQuestion() }
+                        onNext = { viewModel.onNextQuestion() },
+                        onPrevious = { viewModel.onPreviousQuestion() },
+                        isFavorite = currentState.word.isFavorite,
+                        onToggleFavorite = { viewModel.toggleFavorite() }
                     )
                 }
                 is LearningState.Completed -> {
@@ -111,7 +124,10 @@ fun LearningScreen(
 private fun FlashcardContent(
     state: LearningState.Flashcard,
     onFlip: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -119,11 +135,24 @@ private fun FlashcardContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = state.progress,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = state.progress,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -136,11 +165,53 @@ private fun FlashcardContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("下一张")
+        when {
+            state.isFirst -> {
+                Button(
+                    onClick = onNext,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("下一张")
+                }
+            }
+            state.isLast -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = onPrevious,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("上一张")
+                    }
+                    Button(
+                        onClick = onNext,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("进入测试")
+                    }
+                }
+            }
+            else -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = onPrevious,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("上一张")
+                    }
+                    Button(
+                        onClick = onNext,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("下一张")
+                    }
+                }
+            }
         }
     }
 }
@@ -149,18 +220,34 @@ private fun FlashcardContent(
 private fun QuizContent(
     state: LearningState.Quiz,
     onSelectAnswer: (Int) -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = state.progress,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = state.progress,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -185,16 +272,22 @@ private fun QuizContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        state.options.forEachIndexed { index, option ->
-            QuizOption(
-                text = option,
-                index = index,
-                isSelected = state.selectedIndex == index,
-                isCorrect = if (state.showFeedback) index == state.correctIndex else null,
-                showResult = state.showFeedback,
-                onClick = { if (!state.showFeedback) onSelectAnswer(index) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            state.options.forEachIndexed { index, option ->
+                QuizOption(
+                    text = option,
+                    index = index,
+                    isSelected = state.selectedIndex == index,
+                    isCorrect = if (state.showFeedback) index == state.correctIndex else null,
+                    showResult = state.showFeedback,
+                    onClick = { if (!state.showFeedback) onSelectAnswer(index) }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         if (state.showFeedback) {
@@ -222,15 +315,63 @@ private fun QuizContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onNext,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("下一题")
+            when {
+                state.isFirst && state.isLast -> {
+                    Button(
+                        onClick = onPrevious,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("完成")
+                    }
+                }
+                state.isLast -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Button(
+                            onClick = onPrevious,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("上一题")
+                        }
+                        Button(
+                            onClick = onNext,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("完成")
+                        }
+                    }
+                }
+                state.isFirst -> {
+                    Button(
+                        onClick = onNext,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("下一题")
+                    }
+                }
+                else -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Button(
+                            onClick = onPrevious,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("上一题")
+                        }
+                        Button(
+                            onClick = onNext,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("下一题")
+                        }
+                    }
+                }
             }
         }
-
-        Spacer(modifier = Modifier.weight(1f))
     }
 }
 

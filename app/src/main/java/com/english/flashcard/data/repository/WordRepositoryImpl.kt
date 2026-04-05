@@ -1,18 +1,30 @@
 package com.english.flashcard.data.repository
 
+import com.english.flashcard.data.local.database.dao.DailyProgressDao
 import com.english.flashcard.data.local.database.dao.WordDao
+import com.english.flashcard.data.local.database.entity.DailyProgressEntity
 import com.english.flashcard.data.local.database.entity.WordEntity
+import com.english.flashcard.domain.model.DailyProgress
+import com.english.flashcard.domain.model.Phrase
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val gson = Gson()
+
 @Singleton
 class WordRepositoryImpl @Inject constructor(
-    private val wordDao: WordDao
+    private val wordDao: WordDao,
+    private val dailyProgressDao: DailyProgressDao
 ) : WordRepository {
     
     override fun getAllWords(): Flow<List<Word>> =
@@ -34,9 +46,6 @@ class WordRepositoryImpl @Inject constructor(
         wordDao.searchWords(query).map { entities ->
             entities.map { it.toDomain() }
         }
-    
-    override fun getWordById(id: Long): Flow<Word?> =
-        wordDao.getWordById(id).map { it?.toDomain() }
     
     override fun getNewWordsForToday(limit: Int): Flow<List<Word>> = flow {
         emit(wordDao.getNewWords(limit).map { it.toDomain() })
@@ -65,37 +74,49 @@ class WordRepositoryImpl @Inject constructor(
         wordDao.deleteWords(wordIds)
     }
     
-    override fun getWordCount(): Flow<Int> =
-        wordDao.getWordCount()
-    
     override fun getMasteredWordCount(): Flow<Int> =
         wordDao.getMasteredWordCount()
-    
-    override fun getWordsByPrefix(prefix: String): Flow<List<Word>> = flow {
-        emit(wordDao.getWordsByPrefix(prefix).map { it.toDomain() })
+
+    override suspend fun saveDailyProgress(progress: DailyProgress) {
+        dailyProgressDao.insertOrUpdate(progress.toEntity())
     }
+
+    override fun getDailyProgressFlow(date: String): Flow<DailyProgress?> =
+        dailyProgressDao.getProgressByDateFlow(date).map { it?.toDomain() }
+
+    override suspend fun getRecentProgress(days: Int): List<DailyProgress> =
+        dailyProgressDao.getRecentProgress(days).map { it.toDomain() }
 }
 
-fun WordEntity.toDomain(): Word = Word(
-    id = id,
-    word = word,
-    phonetic = phonetic,
-    meaning = meaning,
-    example = example,
-    isFavorite = isFavorite,
-    isMastered = isMastered,
-    correctStreak = correctStreak,
-    wrongCount = wrongCount,
-    lastReviewAt = if (lastReviewAt != null && lastReviewAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(lastReviewAt, 0, java.time.ZoneOffset.UTC)
-    } else null,
-    nextReviewAt = if (nextReviewAt != null && nextReviewAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(nextReviewAt, 0, java.time.ZoneOffset.UTC)
-    } else null,
-    createdAt = if (createdAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(createdAt, 0, java.time.ZoneOffset.UTC)
-    } else java.time.LocalDateTime.now()
-)
+fun WordEntity.toDomain(): Word {
+    val phraseList: List<Phrase> = try {
+        gson.fromJson(phrases, object : TypeToken<List<Phrase>>() {}.type) ?: emptyList()
+    } catch (e: Exception) {
+        emptyList()
+    }
+    
+    return Word(
+        id = id,
+        word = word,
+        phonetic = phonetic,
+        meaning = meaning,
+        example = example,
+        isFavorite = isFavorite,
+        isMastered = isMastered,
+        correctStreak = correctStreak,
+        wrongCount = wrongCount,
+        lastReviewAt = if (lastReviewAt != null && lastReviewAt > 0) {
+            LocalDateTime.ofEpochSecond(lastReviewAt, 0, ZoneOffset.UTC)
+        } else null,
+        nextReviewAt = if (nextReviewAt != null && nextReviewAt > 0) {
+            LocalDateTime.ofEpochSecond(nextReviewAt, 0, ZoneOffset.UTC)
+        } else null,
+        createdAt = if (createdAt > 0) {
+            LocalDateTime.ofEpochSecond(createdAt, 0, ZoneOffset.UTC)
+        } else LocalDateTime.now(),
+        phrases = phraseList
+    )
+}
 
 fun Word.toEntity(): WordEntity = WordEntity(
     id = id,
@@ -107,7 +128,26 @@ fun Word.toEntity(): WordEntity = WordEntity(
     isMastered = isMastered,
     correctStreak = correctStreak,
     wrongCount = wrongCount,
-    lastReviewAt = lastReviewAt?.toEpochSecond(java.time.ZoneOffset.UTC),
-    nextReviewAt = nextReviewAt?.toEpochSecond(java.time.ZoneOffset.UTC),
-    createdAt = createdAt.toEpochSecond(java.time.ZoneOffset.UTC)
+    lastReviewAt = lastReviewAt?.toEpochSecond(ZoneOffset.UTC),
+    nextReviewAt = nextReviewAt?.toEpochSecond(ZoneOffset.UTC),
+    createdAt = createdAt.toEpochSecond(ZoneOffset.UTC),
+    phrases = gson.toJson(phrases)
+)
+
+fun DailyProgressEntity.toDomain(): DailyProgress = DailyProgress(
+    id = id,
+    date = LocalDate.parse(date),
+    newWordsLearned = newWordsLearned,
+    wordsReviewed = wordsReviewed,
+    correctCount = correctCount,
+    totalCount = totalCount
+)
+
+fun DailyProgress.toEntity(): DailyProgressEntity = DailyProgressEntity(
+    id = id,
+    date = date.toString(),
+    newWordsLearned = newWordsLearned,
+    wordsReviewed = wordsReviewed,
+    correctCount = correctCount,
+    totalCount = totalCount
 )

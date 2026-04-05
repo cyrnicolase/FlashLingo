@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -32,6 +33,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.english.flashcard.domain.model.Word
+import kotlinx.coroutines.launch
 import com.english.flashcard.ui.components.EmptyState
-import com.english.flashcard.ui.components.WordBottomSheet
+import com.english.flashcard.ui.components.WordDetailSheet
 import com.english.flashcard.ui.components.WordCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +53,9 @@ fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState()
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -88,15 +94,32 @@ fun LibraryScreen(
                     message = "开始学习来构建你的词汇库"
                 )
             } else {
+                val letterIndices = remember(uiState.groupedWords) {
+                    mutableMapOf<Char, Int>().apply {
+                        var index = 0
+                        uiState.groupedWords.forEach { (letter, words) ->
+                            put(letter, index)
+                            index += 1 + words.size
+                        }
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     AlphabetSidebar(
                         letters = uiState.groupedWords.keys.toList(),
-                        onLetterClick = { /* TODO: scroll to section */ }
+                        onLetterClick = { letter ->
+                            letterIndices[letter]?.let { index ->
+                                scope.launch {
+                                    listState.animateScrollToItem(index)
+                                }
+                            }
+                        }
                     )
 
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
@@ -128,7 +151,7 @@ fun LibraryScreen(
         }
 
         if (uiState.showBottomSheet && uiState.selectedWord != null) {
-            WordBottomSheet(
+            WordDetailSheet(
                 word = uiState.selectedWord!!,
                 onDismiss = viewModel::onDismissBottomSheet,
                 onToggleFavorite = { viewModel.onToggleFavorite(uiState.selectedWord!!.id) },

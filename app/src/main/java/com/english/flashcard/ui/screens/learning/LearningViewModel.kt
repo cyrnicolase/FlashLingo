@@ -2,23 +2,26 @@ package com.english.flashcard.ui.screens.learning
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.english.flashcard.data.local.preferences.UserPreferences
+import com.english.flashcard.domain.model.DailyProgress
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import com.english.flashcard.domain.usecase.UpdateWordAfterAnswerUseCase
+import com.english.flashcard.ui.navigation.LearningType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class LearningViewModel @Inject constructor(
     private val wordRepository: WordRepository,
-    private val updateWordAfterAnswerUseCase: UpdateWordAfterAnswerUseCase
+    private val updateWordAfterAnswerUseCase: UpdateWordAfterAnswerUseCase,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<LearningState>(LearningState.Loading)
@@ -31,9 +34,9 @@ class LearningViewModel @Inject constructor(
     private var totalAnswered = 0
     private var startTime = 0L
     private var learningType: LearningType = LearningType.Today
-
-    private var flashcardPhase = true
+    private var flashcardIndex = 0
     private var currentWord: Word? = null
+    private var shuffledAllWords: List<Word> = emptyList()
 
     private val encouragingMessages = listOf(
         "加油！再想想！",
@@ -52,15 +55,16 @@ class LearningViewModel @Inject constructor(
         currentIndex = 0
         correctCount = 0
         totalAnswered = 0
-        flashcardPhase = true
+        flashcardIndex = 0
 
         viewModelScope.launch {
             _state.value = LearningState.Loading
 
             when (type) {
                 LearningType.Today -> {
-                    newWords = wordRepository.getNewWordsForToday(10).first()
-                    reviewWords = wordRepository.getWordsForReview().first()
+                    val dailyNewWords = userPreferences.dailyNewWords.first()
+                    newWords = wordRepository.getNewWordsForToday(dailyNewWords).first()
+                    reviewWords = emptyList()
                 }
                 LearningType.Review -> {
                     reviewWords = wordRepository.getWordsForReview().first()
@@ -76,21 +80,22 @@ class LearningViewModel @Inject constructor(
                 }
             }
 
-            val allWords = newWords + reviewWords
-            if (allWords.isEmpty()) {
+            shuffledAllWords = (newWords + reviewWords).shuffled()
+            if (shuffledAllWords.isEmpty()) {
                 _state.value = LearningState.Empty(type)
             } else {
-                showFlashcard(allWords[0], allWords.size)
+                showFlashcard(shuffledAllWords[0], shuffledAllWords.size)
             }
         }
     }
 
     private fun showFlashcard(word: Word, total: Int) {
         currentWord = word
-        flashcardPhase = true
         _state.value = LearningState.Flashcard(
             word = word,
-            progress = "${currentIndex + 1}/$total"
+            progress = "${flashcardIndex + 1}/$total",
+            isFirst = flashcardIndex == 0,
+            isLast = flashcardIndex >= total - 1
         )
     }
 
@@ -101,35 +106,55 @@ class LearningViewModel @Inject constructor(
         }
     }
 
-    fun onNextFlashcard() {
-        val allWords = newWords + reviewWords
-        currentIndex++
-
-        if (currentIndex >= allWords.size) {
-            finishLearning()
-        } else {
-            val word = allWords[currentIndex]
-            flashcardPhase = false
-            showQuiz(word, allWords.size)
+    fun onPreviousFlashcard() {
+        if (flashcardIndex > 0) {
+            flashcardIndex--
+            val word = shuffledAllWords[flashcardIndex]
+            showFlashcard(word, shuffledAllWords.size)
         }
     }
 
-    private fun showQuiz(word: Word, total: Int) {
+    fun onNextFlashcard() {
+        flashcardIndex++
+
+        if (flashcardIndex >= shuffledAllWords.size) {
+            if (learningType == LearningType.Today) {
+                currentIndex = 0
+                val quizWords = shuffledAllWords.shuffled()
+                if (quizWords.isNotEmpty()) {
+                    showQuiz(quizWords[0], quizWords.size, quizWords)
+                } else {
+                    finishLearning()
+                }
+            } else {
+                finishLearning()
+            }
+        } else {
+            val word = shuffledAllWords[flashcardIndex]
+            showFlashcard(word, shuffledAllWords.size)
+        }
+    }
+
+    private var quizWords: List<Word> = emptyList()
+
+    private fun showQuiz(word: Word, total: Int, quizWordList: List<Word>) {
+        quizWords = quizWordList
         currentWord = word
         val options = generateQuizOptions(word)
         _state.value = LearningState.Quiz(
             word = word,
             options = options,
-            progress = "${currentIndex + 1}/$total"
+            progress = "${currentIndex + 1}/$total",
+            isFirst = currentIndex == 0,
+            isLast = currentIndex >= total - 1
         )
     }
 
     private fun generateQuizOptions(correctWord: Word): List<String> {
-        val allWords = newWords + reviewWords
-        val sameLetterWords = allWords.filter {
+        val sameLetterWords = quizWords.filter {
             it.id != correctWord.id && it.word.first().lowercaseChar() == correctWord.word.first().lowercaseChar()
         }
-        val otherWords = allWords.filter {
+        val otherWords = quizWords.filter {
             it.id != correctWord.id && it.word.first().lowercaseChar() != correctWord.word.first().lowercaseChar()
         }
 
@@ -175,14 +200,26 @@ class LearningViewModel @Inject constructor(
     }
 
     fun onNextQuestion() {
-        val allWords = newWords + reviewWords
         currentIndex++
 
-        if (currentIndex >= allWords.size) {
+        if (currentIndex >= quizWords.size) {
             finishLearning()
         } else {
-            val word = allWords[currentIndex]
-            showQuiz(word, allWords.size)
+            val word = quizWords[currentIndex]
+            showQuiz(word, quizWords.size, quizWords)
+        }
+    }
+
+    fun onPreviousQuestion() {
+        if (currentIndex > 0) {
+            currentIndex--
+            val word = quizWords[currentIndex]
+            showQuiz(word, quizWords.size, quizWords)
+        } else {
+            flashcardIndex = shuffledAllWords.size - 1
+            if (shuffledAllWords.isNotEmpty()) {
+                showFlashcard(shuffledAllWords[flashcardIndex], shuffledAllWords.size)
+            }
         }
     }
 
@@ -190,11 +227,52 @@ class LearningViewModel @Inject constructor(
         val durationSeconds = ((System.currentTimeMillis() - startTime) / 1000).toInt()
         val accuracy = if (totalAnswered > 0) correctCount.toFloat() / totalAnswered else 0f
 
+        viewModelScope.launch {
+            val today = LocalDate.now()
+            val existingProgress = wordRepository.getDailyProgressFlow(today.toString()).first()
+            
+            val updatedProgress = DailyProgress(
+                id = existingProgress?.id ?: 0,
+                date = today,
+                newWordsLearned = (existingProgress?.newWordsLearned ?: 0) + newWords.size,
+                wordsReviewed = (existingProgress?.wordsReviewed ?: 0) + totalAnswered,
+                correctCount = (existingProgress?.correctCount ?: 0) + correctCount,
+                totalCount = (existingProgress?.totalCount ?: 0) + totalAnswered
+            )
+            wordRepository.saveDailyProgress(updatedProgress)
+        }
+
         _state.value = LearningState.Completed(
             totalWords = totalAnswered,
             correctCount = correctCount,
             accuracy = accuracy,
             durationSeconds = durationSeconds
         )
+    }
+
+    fun toggleFavorite() {
+        currentWord?.let { word ->
+            viewModelScope.launch {
+                wordRepository.toggleFavorite(word.id)
+                val updatedWord = word.copy(isFavorite = !word.isFavorite)
+                currentWord = updatedWord
+                updateWordInLists(updatedWord)
+                refreshCurrentState(updatedWord)
+            }
+        }
+    }
+
+    private fun updateWordInLists(word: Word) {
+        shuffledAllWords = shuffledAllWords.map { if (it.id == word.id) word else it }
+        quizWords = quizWords.map { if (it.id == word.id) word else it }
+    }
+
+    private fun refreshCurrentState(word: Word) {
+        val current = _state.value
+        _state.value = when (current) {
+            is LearningState.Flashcard -> current.copy(word = word)
+            is LearningState.Quiz -> current.copy(word = word)
+            else -> current
+        }
     }
 }

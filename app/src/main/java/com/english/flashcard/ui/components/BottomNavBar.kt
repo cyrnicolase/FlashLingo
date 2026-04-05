@@ -1,14 +1,15 @@
 package com.english.flashcard.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -38,8 +39,8 @@ fun BottomNavBar(navController: NavController) {
         BottomNavItem(
             route = Screen.Library.route,
             label = "单词库",
-            selectedIcon = Icons.Filled.LibraryBooks,
-            unselectedIcon = Icons.Outlined.LibraryBooks
+            selectedIcon = Icons.AutoMirrored.Filled.LibraryBooks,
+            unselectedIcon = Icons.AutoMirrored.Outlined.LibraryBooks
         ),
         BottomNavItem(
             route = Screen.Favorites.route,
@@ -63,8 +64,12 @@ fun BottomNavBar(navController: NavController) {
             val selected = currentRoute == item.route
             NavigationBarItem(
                 icon = {
-                    Text(text = if (selected) item.label else "")
+                    Icon(
+                        imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.label
+                    )
                 },
+                label = { Text(item.label) },
                 selected = selected,
                 onClick = {
                     if (currentRoute != item.route) {

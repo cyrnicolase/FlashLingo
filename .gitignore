@@ -45,6 +45,9 @@ Desktop.ini
 crashlytics.properties
 crashlytics-build.properties
 
+# Data
+data/
+
 # Environment
 .env
 .env.local

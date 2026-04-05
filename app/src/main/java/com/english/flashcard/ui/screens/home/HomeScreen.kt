@@ -110,7 +110,6 @@ fun HomeScreen(
                 TodayTaskCard(
                     date = uiState.todayDate,
                     newWords = uiState.todayNewWords,
-                    reviewWords = uiState.todayReviewWords,
                     progressPercent = uiState.todayProgressPercent,
                     onStartLearning = onStartLearning
                 )
@@ -176,7 +175,6 @@ fun HomeScreen(
 private fun TodayTaskCard(
     date: String,
     newWords: Int,
-    reviewWords: Int,
     progressPercent: Int,
     onStartLearning: () -> Unit
 ) {
@@ -215,18 +213,12 @@ private fun TodayTaskCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.Center
             ) {
                 TaskCountItem(
                     label = "新词",
                     count = newWords,
                     color = MaterialTheme.colorScheme.primary
-                )
-
-                TaskCountItem(
-                    label = "复习",
-                    count = reviewWords,
-                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
 

@@ -14,7 +14,8 @@ data class Word(
     val wrongCount: Int = 0,
     val lastReviewAt: LocalDateTime? = null,
     val nextReviewAt: LocalDateTime? = null,
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val phrases: List<Phrase> = emptyList()
 ) {
     val isNew: Boolean
         get() = lastReviewAt == null

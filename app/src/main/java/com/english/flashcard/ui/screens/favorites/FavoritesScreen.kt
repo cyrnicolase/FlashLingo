@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.english.flashcard.ui.components.EmptyState
-import com.english.flashcard.ui.components.WordBottomSheet
+import com.english.flashcard.ui.components.WordDetailSheet
 import com.english.flashcard.ui.components.WordCard
 import com.english.flashcard.ui.navigation.LearningType
 
@@ -47,10 +47,10 @@ import com.english.flashcard.ui.navigation.LearningType
 @Composable
 fun FavoritesScreen(
     viewModel: FavoritesViewModel = hiltViewModel(),
-    onNavigateToLearning: (String) -> Unit = {}
+    onNavigateToLearning: (LearningType) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -118,7 +118,7 @@ fun FavoritesScreen(
 
                 if (uiState.filteredWords.isNotEmpty()) {
                     Button(
-                        onClick = { onNavigateToLearning(LearningType.Favorites.value) },
+                        onClick = { onNavigateToLearning(LearningType.Favorites) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
@@ -132,7 +132,7 @@ fun FavoritesScreen(
         }
 
         if (uiState.showBottomSheet && uiState.selectedWord != null) {
-            WordBottomSheet(
+            WordDetailSheet(
                 word = uiState.selectedWord!!,
                 onDismiss = viewModel::onDismissBottomSheet,
                 onToggleFavorite = { viewModel.onToggleFavorite(uiState.selectedWord!!.id) },

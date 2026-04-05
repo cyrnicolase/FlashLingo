@@ -60,24 +60,21 @@ class HomeViewModel @Inject constructor(
 
                 val dailyNewWords = userPreferences.dailyNewWords.first()
                 val todayNewWords = wordRepository.getNewWordsForToday(dailyNewWords).first().size
-                val todayReviewWords = wordRepository.getWordsForReview().first().size
                 val wrongWordCount = wordRepository.getWrongWords().first().size
                 val favoriteCount = wordRepository.getFavoriteWords().first().size
                 val masteredCount = wordRepository.getMasteredWordCount().first()
 
-                getDailyProgressUseCase().collect { progress ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            todayDate = dateString,
-                            todayNewWords = todayNewWords,
-                            todayReviewWords = todayReviewWords,
-                            todayProgress = progress,
-                            wrongWordCount = wrongWordCount,
-                            favoriteCount = favoriteCount,
-                            masteredCount = masteredCount
-                        )
-                    }
+                val progress = getDailyProgressUseCase().first()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        todayDate = dateString,
+                        todayNewWords = todayNewWords,
+                        todayProgress = progress,
+                        wrongWordCount = wrongWordCount,
+                        favoriteCount = favoriteCount,
+                        masteredCount = masteredCount
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update {

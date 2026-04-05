@@ -9,7 +9,9 @@ sealed class LearningState {
     data class Flashcard(
         val word: Word,
         val progress: String,
-        val isFlipped: Boolean = false
+        val isFlipped: Boolean = false,
+        val isFirst: Boolean = true,
+        val isLast: Boolean = false
     ) : LearningState()
     data class Quiz(
         val word: Word,
@@ -19,7 +21,9 @@ sealed class LearningState {
         val correctIndex: Int? = null,
         val isCorrect: Boolean? = null,
         val showFeedback: Boolean = false,
-        val encouragingMessage: String? = null
+        val encouragingMessage: String? = null,
+        val isFirst: Boolean = true,
+        val isLast: Boolean = false
     ) : LearningState()
     data class Completed(
         val totalWords: Int,

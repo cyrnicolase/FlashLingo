@@ -9,10 +9,14 @@ import com.english.flashcard.data.local.database.entity.WordEntity
 
 @Database(
     entities = [WordEntity::class, DailyProgressEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
     abstract fun dailyProgressDao(): DailyProgressDao
+    
+    companion object {
+        const val DATABASE_NAME = "flashcard_database"
+    }
 }

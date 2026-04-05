@@ -49,5 +49,8 @@ data class WordEntity(
     val nextReviewAt: Long? = null,
     
     @ColumnInfo(name = "createdAt")
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    
+    @ColumnInfo(name = "phrases")
+    val phrases: String = "[]"
 )

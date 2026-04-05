@@ -1,4 +1,4 @@
-package com.english.flashcard.ui.screens.library
+package com.english.flashcard.ui.screens.favorites
 
 import com.english.flashcard.domain.model.Word
 

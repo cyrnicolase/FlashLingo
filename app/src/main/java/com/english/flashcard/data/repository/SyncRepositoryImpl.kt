@@ -2,7 +2,6 @@ package com.english.flashcard.data.repository
 
 import com.english.flashcard.data.local.preferences.UserPreferences
 import com.english.flashcard.data.remote.api.WordApi
-import com.english.flashcard.data.remote.dto.WordDto
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.SyncRepository
 import com.english.flashcard.domain.repository.WordRepository
@@ -55,13 +54,5 @@ class SyncRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-    
-    override fun getLastSyncTimestamp(): Long {
-        return 0L
-    }
-    
-    override suspend fun setLastSyncTimestamp(timestamp: Long) {
-        userPreferences.setLastSyncTimestamp(timestamp)
     }
 }

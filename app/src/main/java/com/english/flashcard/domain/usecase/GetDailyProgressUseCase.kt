@@ -11,19 +11,15 @@ class GetDailyProgressUseCase @Inject constructor(
     private val wordRepository: WordRepository
 ) {
     operator fun invoke(): Flow<DailyProgress> {
-        return wordRepository.getAllWords().map { words ->
-            val today = LocalDate.now()
-            // Filter words that were reviewed/created today based on lastReviewAt
-            val todayWords = words.filter { word ->
-                word.lastReviewAt?.toLocalDate() == today || word.createdAt.toLocalDate() == today
-            }
-            DailyProgress(
+        val today = LocalDate.now().toString()
+        return wordRepository.getDailyProgressFlow(today).map { progress ->
+            progress ?: DailyProgress(
                 id = 0,
-                date = today,
-                newWordsLearned = todayWords.count { it.isNew },
-                wordsReviewed = todayWords.count { !it.isNew },
-                correctCount = todayWords.sumOf { it.correctStreak },
-                totalCount = todayWords.size
+                date = LocalDate.parse(today),
+                newWordsLearned = 0,
+                wordsReviewed = 0,
+                correctCount = 0,
+                totalCount = 0
             )
         }
     }

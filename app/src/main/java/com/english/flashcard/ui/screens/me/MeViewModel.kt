@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -46,7 +46,27 @@ class MeViewModel @Inject constructor(
         }
     }
 
-    private fun calculateWeekStreak(): Int {
-        return 0
+    private suspend fun calculateWeekStreak(): Int {
+        val recentProgress = wordRepository.getRecentProgress(7)
+        if (recentProgress.isEmpty()) return 0
+
+        val progressByDate = recentProgress.associateBy { it.date }
+        val today = LocalDate.now()
+        
+        var streak = 0
+        var checkDate = today
+        
+        while (true) {
+            val progress = progressByDate[checkDate]
+            if (progress != null && (progress.newWordsLearned > 0 || progress.wordsReviewed > 0)) {
+                streak++
+                checkDate = checkDate.minusDays(1)
+            } else if (checkDate == today) {
+                checkDate = checkDate.minusDays(1)
+            } else {
+                break
+            }
+        }
+        return streak
     }
 }

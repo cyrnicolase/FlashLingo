@@ -6,7 +6,6 @@ data class HomeUiState(
     val showOnboarding: Boolean = false,
     val todayDate: String = "",
     val todayNewWords: Int = 0,
-    val todayReviewWords: Int = 0,
     val todayProgress: DailyProgress? = null,
     val wrongWordCount: Int = 0,
     val favoriteCount: Int = 0,
@@ -16,10 +15,10 @@ data class HomeUiState(
     val error: String? = null
 ) {
     val todayTotalTasks: Int
-        get() = todayNewWords + todayReviewWords
+        get() = todayNewWords
 
     val todayCompletedTasks: Int
-        get() = todayProgress?.totalWords ?: 0
+        get() = todayProgress?.newWordsLearned ?: 0
 
     val todayProgressPercent: Int
         get() = if (todayTotalTasks > 0) {

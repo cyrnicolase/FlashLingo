@@ -30,24 +30,3 @@ data class SyncData(
     @SerializedName("syncTimestamp")
     val syncTimestamp: Long
 )
-
-data class ImportWordsRequest(
-    @SerializedName("words")
-    val words: List<WordDto>
-)
-
-data class ImportWordsResponse(
-    @SerializedName("code")
-    val code: Int,
-    @SerializedName("message")
-    val message: String,
-    @SerializedName("data")
-    val data: ImportData?
-)
-
-data class ImportData(
-    @SerializedName("imported")
-    val imported: Int,
-    @SerializedName("duplicates")
-    val duplicates: Int
-)

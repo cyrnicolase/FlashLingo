@@ -37,28 +37,16 @@ interface WordDao {
     fun searchWords(query: String): Flow<List<WordEntity>>
     
     @Query("SELECT * FROM words WHERE id = :id")
-    fun getWordById(id: Long): Flow<WordEntity?>
-    
-    @Query("SELECT * FROM words WHERE id = :id")
     suspend fun getWordByIdOnce(id: Long): WordEntity?
-    
-    @Query("SELECT * FROM words WHERE word = :word LIMIT 1")
-    suspend fun getWordByWord(word: String): WordEntity?
     
     @Query("SELECT * FROM words WHERE nextReviewAt <= :currentTime ORDER BY nextReviewAt ASC LIMIT :limit")
     suspend fun getWordsForReview(currentTime: Long, limit: Int): List<WordEntity>
     
-    @Query("SELECT * FROM words WHERE lastReviewAt IS NULL ORDER BY createdAt ASC LIMIT :limit")
+    @Query("SELECT * FROM words WHERE lastReviewAt IS NULL ORDER BY RANDOM() LIMIT :limit")
     suspend fun getNewWords(limit: Int): List<WordEntity>
-    
-    @Query("SELECT COUNT(*) FROM words")
-    fun getWordCount(): Flow<Int>
     
     @Query("SELECT COUNT(*) FROM words WHERE isMastered = 1")
     fun getMasteredWordCount(): Flow<Int>
-    
-    @Query("SELECT * FROM words WHERE word LIKE :prefix || '%' ORDER BY word ASC")
-    suspend fun getWordsByPrefix(prefix: String): List<WordEntity>
     
     @Query("DELETE FROM words WHERE id IN (:ids)")
     suspend fun deleteWords(ids: List<Long>)
