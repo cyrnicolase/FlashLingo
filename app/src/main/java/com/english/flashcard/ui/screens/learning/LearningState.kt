@@ -1,6 +1,7 @@
 package com.english.flashcard.ui.screens.learning
 
 import com.english.flashcard.domain.model.Word
+import com.english.flashcard.ui.navigation.LearningType
 
 sealed class LearningState {
     object Loading : LearningState()
@@ -26,11 +27,4 @@ sealed class LearningState {
         val accuracy: Float,
         val durationSeconds: Int
     ) : LearningState()
-}
-
-enum class LearningType(val value: String) {
-    Today("today"),
-    Review("review"),
-    WrongWords("wrong"),
-    Favorites("favorites")
 }

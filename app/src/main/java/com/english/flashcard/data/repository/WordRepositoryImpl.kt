@@ -5,6 +5,7 @@ import com.english.flashcard.data.local.database.entity.WordEntity
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,19 +38,13 @@ class WordRepositoryImpl @Inject constructor(
     override fun getWordById(id: Long): Flow<Word?> =
         wordDao.getWordById(id).map { it?.toDomain() }
     
-    override fun getNewWordsForToday(limit: Int): Flow<List<Word>> =
-        wordDao.getNewWords(limit).let { entities ->
-            kotlinx.coroutines.flow.flow {
-                emit(entities.map { it.toDomain() })
-            }
-        }
+    override fun getNewWordsForToday(limit: Int): Flow<List<Word>> = flow {
+        emit(wordDao.getNewWords(limit).map { it.toDomain() })
+    }
     
-    override fun getWordsForReview(): Flow<List<Word>> =
-        wordDao.getWordsForReview(System.currentTimeMillis(), 50).let { entities ->
-            kotlinx.coroutines.flow.flow {
-                emit(entities.map { it.toDomain() })
-            }
-        }
+    override fun getWordsForReview(): Flow<List<Word>> = flow {
+        emit(wordDao.getWordsForReview(System.currentTimeMillis(), 50).map { it.toDomain() })
+    }
     
     override suspend fun updateWord(word: Word) {
         wordDao.updateWord(word.toEntity())
@@ -76,12 +71,9 @@ class WordRepositoryImpl @Inject constructor(
     override fun getMasteredWordCount(): Flow<Int> =
         wordDao.getMasteredWordCount()
     
-    override fun getWordsByPrefix(prefix: String): Flow<List<Word>> =
-        wordDao.getWordsByPrefix(prefix).let { entities ->
-            kotlinx.coroutines.flow.flow {
-                emit(entities.map { it.toDomain() })
-            }
-        }
+    override fun getWordsByPrefix(prefix: String): Flow<List<Word>> = flow {
+        emit(wordDao.getWordsByPrefix(prefix).map { it.toDomain() })
+    }
 }
 
 fun WordEntity.toDomain(): Word = Word(
@@ -95,13 +87,13 @@ fun WordEntity.toDomain(): Word = Word(
     correctStreak = correctStreak,
     wrongCount = wrongCount,
     lastReviewAt = if (lastReviewAt != null && lastReviewAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(lastReviewAt / 1000, 0, java.time.ZoneOffset.UTC)
+        java.time.LocalDateTime.ofEpochSecond(lastReviewAt, 0, java.time.ZoneOffset.UTC)
     } else null,
     nextReviewAt = if (nextReviewAt != null && nextReviewAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(nextReviewAt / 1000, 0, java.time.ZoneOffset.UTC)
+        java.time.LocalDateTime.ofEpochSecond(nextReviewAt, 0, java.time.ZoneOffset.UTC)
     } else null,
     createdAt = if (createdAt > 0) {
-        java.time.LocalDateTime.ofEpochSecond(createdAt / 1000, 0, java.time.ZoneOffset.UTC)
+        java.time.LocalDateTime.ofEpochSecond(createdAt, 0, java.time.ZoneOffset.UTC)
     } else java.time.LocalDateTime.now()
 )
 
