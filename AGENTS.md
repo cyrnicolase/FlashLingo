@@ -1,40 +1,43 @@
 # English Flashcard - Agent Instructions
 
+## Environment Requirements
+
+- **Java**: JDK 21 (`export JAVA_HOME=/opt/homebrew/opt/openjdk@21`)
+- **Gradle**: 8.10 (wrapper), **Kotlin**: 2.0.0, **AGP**: 8.5.2
+- **Kotlin 2.0 requires `org.jetbrains.kotlin.plugin.compose`** in both `build.gradle.kts` (plugins block) and `app/build.gradle.kts`
+
 ## Build Commands
 
 ```bash
-# Must run before first build or when data/BeiShiGaoZhong_1.json changes
-python3 scripts/convert_to_sqlite.py
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21
 
-# Or use Make (includes db step automatically)
-make debug    # Build debug APK
-make release  # Build release APK
-make install  # Install to connected device
+# Use Make — it runs database conversion automatically
+make debug    # convert db → assembleDebug
+make release  # convert db → assembleRelease
+make install  # install to device (requires adb)
 
-# Direct Gradle (does NOT run db conversion)
+# Direct Gradle — does NOT convert database
 ./gradlew assembleDebug
 ./gradlew assembleRelease
+
+# Lint
+make lint
 ```
 
-## Project Structure
-
-- **Single module**: `:app` only
-- **Package**: `com.english.flashcard`
-- **UI**: Jetpack Compose with Material3
-- **DI**: Hilt (`@HiltViewModel`, `@Inject`)
-- **Database**: Room with pre-populated `words.db`
-- **Network**: Retrofit + OkHttp
-- **Data source**: `data/BeiShiGaoZhong_1.json` (must convert to SQLite before building)
+**Re-convert DB** when `data/BeiShiGaoZhong_1.json` changes: `python3 scripts/convert_to_sqlite.py`
 
 ## Architecture
 
-- Screens live in `app/src/main/java/com/english/flashcard/ui/screens/`
-- Shared UI components in `app/src/main/java/com/english/flashcard/ui/components/`
-- Navigation via `NavGraph.kt` with `Screen.kt` route definitions
-- Repositories in `domain/repository/` → implementations in `data/repository/`
+- **Single module**: `:app` only, package `com.english.flashcard`
+- **UI**: Jetpack Compose + Material3, screens in `ui/screens/`, components in `ui/components/`
+- **DI**: Hilt (`@HiltViewModel`, `@Inject`)
+- **Domain**: `domain/repository/` (interfaces) → `data/repository/` (impls)
+- **Database**: Room, pre-populated from `app/src/main/assets/database/words.db`
+- **Network**: Retrofit + OkHttp
+- **Word mastery logic**: `correctStreak >= 2` → `isMastered = true` (`UpdateWordAfterAnswerUseCase.kt:15`)
 
 ## Notes
 
-- No unit tests currently exist in the repo
-- `make lint` runs Android lint analysis
-- The pre-populated database lives at `app/src/main/assets/database/words.db`
+- No unit tests exist
+- `LearningType.Test` mode randomizes word selection and skips daily progress tracking (but still saves word-level progress like `isMastered`)
+- `HomeViewModel.loadData()` uses `.first()` for daily stats; use `MeViewModel` pattern with `.collect()` if real-time updates are needed

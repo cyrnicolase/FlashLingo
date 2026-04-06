@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -61,19 +62,15 @@ class HomeViewModel @Inject constructor(
                 val dailyNewWords = userPreferences.dailyNewWords.first()
                 val todayNewWords = wordRepository.getNewWordsForToday(dailyNewWords).first().size
                 val wrongWordCount = wordRepository.getWrongWords().first().size
-                val favoriteCount = wordRepository.getFavoriteWordCount().first()
-                val masteredCount = wordRepository.getMasteredWordCount().first()
-
                 val progress = getDailyProgressUseCase().first()
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         todayDate = dateString,
                         todayNewWords = todayNewWords,
                         todayProgress = progress,
-                        wrongWordCount = wrongWordCount,
-                        favoriteCount = favoriteCount,
-                        masteredCount = masteredCount
+                        wrongWordCount = wrongWordCount
                     )
                 }
             } catch (e: Exception) {
@@ -81,6 +78,22 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "加载数据失败"
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            combine(
+                wordRepository.getFavoriteWordCount(),
+                wordRepository.getMasteredWordCount()
+            ) { favoriteCount, masteredCount ->
+                Pair(favoriteCount, masteredCount)
+            }.collect { (favoriteCount, masteredCount) ->
+                _uiState.update {
+                    it.copy(
+                        favoriteCount = favoriteCount,
+                        masteredCount = masteredCount
                     )
                 }
             }

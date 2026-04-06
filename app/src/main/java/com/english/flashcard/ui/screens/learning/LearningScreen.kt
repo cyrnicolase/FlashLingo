@@ -65,7 +65,7 @@ fun LearningScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("学习") },
+                title = { Text(if (type == LearningType.Test) "测试" else "学习") },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(Icons.Default.Close, contentDescription = "关闭")
@@ -352,7 +352,7 @@ private fun QuizContent(
             when {
                 state.isFirst && state.isLast -> {
                     Button(
-                        onClick = onPrevious,
+                        onClick = onNext,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("完成")
