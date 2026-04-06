@@ -2,8 +2,9 @@
 
 ## Environment Requirements
 
-- **Java**: JDK 21 (`export JAVA_HOME=/opt/homebrew/opt/openjdk@21`)
-- **Gradle**: 8.10 (wrapper), **Kotlin**: 2.0.0, **AGP**: 8.5.2
+- **Java**: JDK 21
+- **Gradle**: 8.10 (wrapper, **minimum 8.7 required**), **Kotlin**: 2.0.0, **AGP**: 8.5.2
+- **IMPORTANT**: Always use `./gradlew` (wrapper), NOT `gradle` (global). Global Gradle 8.5 is incompatible with AGP 8.5.2.
 - **Kotlin 2.0 requires `org.jetbrains.kotlin.plugin.compose`** in both `build.gradle.kts` (plugins block) and `app/build.gradle.kts`
 
 ## Build Commands
