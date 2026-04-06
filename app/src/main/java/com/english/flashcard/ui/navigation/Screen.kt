@@ -23,5 +23,6 @@ enum class LearningType(val value: String) {
     Today("today"),
     Review("review"),
     WrongWords("wrong"),
-    Favorites("favorites")
+    Favorites("favorites"),
+    Test("test")
 }

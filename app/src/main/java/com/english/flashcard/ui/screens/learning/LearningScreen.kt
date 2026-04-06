@@ -95,11 +95,14 @@ fun LearningScreen(
                 is LearningState.Flashcard -> {
                     FlashcardContent(
                         state = currentState,
+                        learningType = type,
                         onFlip = { viewModel.onFlashcardFlip() },
                         onNext = { viewModel.onNextFlashcard() },
                         onPrevious = { viewModel.onPreviousFlashcard() },
                         isFavorite = currentState.word.isFavorite,
-                        onToggleFavorite = { viewModel.toggleFavorite() }
+                        onToggleFavorite = { viewModel.toggleFavorite() },
+                        onRemove = { viewModel.removeFromWrongWords() },
+                        onFinish = onClose
                     )
                 }
                 is LearningState.Quiz -> {
@@ -123,11 +126,14 @@ fun LearningScreen(
 @Composable
 private fun FlashcardContent(
     state: LearningState.Flashcard,
+    learningType: LearningType,
     onFlip: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     isFavorite: Boolean,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onRemove: () -> Unit,
+    onFinish: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -145,12 +151,23 @@ private fun FlashcardContent(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            IconButton(onClick = onToggleFavorite) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = if (isFavorite) "取消收藏" else "收藏",
-                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                )
+            Row {
+                if (learningType == LearningType.WrongWords) {
+                    IconButton(onClick = onRemove) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "移除",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                IconButton(onClick = onToggleFavorite) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
 
@@ -166,6 +183,14 @@ private fun FlashcardContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         when {
+            state.isFirst && state.isLast -> {
+                Button(
+                    onClick = onFinish,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("完成")
+                }
+            }
             state.isFirst -> {
                 Button(
                     onClick = onNext,
@@ -185,11 +210,20 @@ private fun FlashcardContent(
                     ) {
                         Text("上一张")
                     }
-                    Button(
-                        onClick = onNext,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("进入测试")
+                    if (learningType == LearningType.WrongWords) {
+                        Button(
+                            onClick = onFinish,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("完成")
+                        }
+                    } else {
+                        Button(
+                            onClick = onNext,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("进入测试")
+                        }
                     }
                 }
             }
@@ -441,5 +475,6 @@ private fun getEmptyMessage(type: LearningType): String {
         LearningType.Review -> "没有需要复习的单词"
         LearningType.WrongWords -> "恭喜！没有错题了"
         LearningType.Favorites -> "收藏夹是空的"
+        LearningType.Test -> "没有可测试的单词"
     }
 }

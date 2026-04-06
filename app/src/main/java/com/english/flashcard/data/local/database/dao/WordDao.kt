@@ -45,6 +45,12 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE lastReviewAt IS NULL ORDER BY RANDOM() LIMIT :limit")
     suspend fun getNewWords(limit: Int): List<WordEntity>
     
+    @Query("SELECT * FROM words ORDER BY RANDOM() LIMIT :limit")
+    suspend fun getRandomWords(limit: Int): List<WordEntity>
+    
+    @Query("SELECT COUNT(*) FROM words WHERE isFavorite = 1")
+    fun getFavoriteWordCount(): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM words WHERE isMastered = 1")
     fun getMasteredWordCount(): Flow<Int>
     
@@ -53,4 +59,7 @@ interface WordDao {
     
     @Query("UPDATE words SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavorite(id: Long, isFavorite: Boolean)
+
+    @Query("UPDATE words SET wrongCount = 0 WHERE id = :id")
+    suspend fun resetWrongCount(id: Long)
 }

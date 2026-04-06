@@ -6,6 +6,8 @@ import com.english.flashcard.data.local.database.entity.DailyProgressEntity
 import com.english.flashcard.data.local.database.entity.WordEntity
 import com.english.flashcard.domain.model.DailyProgress
 import com.english.flashcard.domain.model.Phrase
+import com.english.flashcard.domain.model.Sentence
+import com.english.flashcard.domain.model.Translation
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import com.google.gson.Gson
@@ -55,6 +57,10 @@ class WordRepositoryImpl @Inject constructor(
         emit(wordDao.getWordsForReview(System.currentTimeMillis(), 50).map { it.toDomain() })
     }
     
+    override fun getRandomWords(count: Int): Flow<List<Word>> = flow {
+        emit(wordDao.getRandomWords(count).map { it.toDomain() })
+    }
+    
     override suspend fun updateWord(word: Word) {
         wordDao.updateWord(word.toEntity())
     }
@@ -65,6 +71,10 @@ class WordRepositoryImpl @Inject constructor(
             wordDao.updateFavorite(wordId, !it.isFavorite)
         }
     }
+
+    override suspend fun removeFromWrongWords(wordId: Long) {
+        wordDao.resetWrongCount(wordId)
+    }
     
     override suspend fun insertWords(words: List<Word>) {
         wordDao.insertWords(words.map { it.toEntity() })
@@ -74,6 +84,9 @@ class WordRepositoryImpl @Inject constructor(
         wordDao.deleteWords(wordIds)
     }
     
+    override fun getFavoriteWordCount(): Flow<Int> =
+        wordDao.getFavoriteWordCount()
+
     override fun getMasteredWordCount(): Flow<Int> =
         wordDao.getMasteredWordCount()
 
@@ -95,12 +108,23 @@ fun WordEntity.toDomain(): Word {
         emptyList()
     }
     
+    val translationsList: List<Translation> = try {
+        gson.fromJson(translations, object : TypeToken<List<Translation>>() {}.type) ?: emptyList()
+    } catch (e: Exception) {
+        emptyList()
+    }
+    
+    val sentencesList: List<Sentence> = try {
+        gson.fromJson(sentences, object : TypeToken<List<Sentence>>() {}.type) ?: emptyList()
+    } catch (e: Exception) {
+        emptyList()
+    }
+    
     return Word(
         id = id,
         word = word,
         phonetic = phonetic,
         meaning = meaning,
-        example = example,
         isFavorite = isFavorite,
         isMastered = isMastered,
         correctStreak = correctStreak,
@@ -114,7 +138,10 @@ fun WordEntity.toDomain(): Word {
         createdAt = if (createdAt > 0) {
             LocalDateTime.ofEpochSecond(createdAt, 0, ZoneOffset.UTC)
         } else LocalDateTime.now(),
-        phrases = phraseList
+        phrases = phraseList,
+        translations = translationsList,
+        sentences = sentencesList,
+        partOfSpeech = partOfSpeech
     )
 }
 
@@ -123,7 +150,6 @@ fun Word.toEntity(): WordEntity = WordEntity(
     word = word,
     phonetic = phonetic,
     meaning = meaning,
-    example = example,
     isFavorite = isFavorite,
     isMastered = isMastered,
     correctStreak = correctStreak,
@@ -131,7 +157,10 @@ fun Word.toEntity(): WordEntity = WordEntity(
     lastReviewAt = lastReviewAt?.toEpochSecond(ZoneOffset.UTC),
     nextReviewAt = nextReviewAt?.toEpochSecond(ZoneOffset.UTC),
     createdAt = createdAt.toEpochSecond(ZoneOffset.UTC),
-    phrases = gson.toJson(phrases)
+    phrases = gson.toJson(phrases),
+    translations = gson.toJson(translations),
+    sentences = gson.toJson(sentences),
+    partOfSpeech = partOfSpeech
 )
 
 fun DailyProgressEntity.toDomain(): DailyProgress = DailyProgress(

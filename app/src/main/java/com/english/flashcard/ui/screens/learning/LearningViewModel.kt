@@ -78,6 +78,11 @@ class LearningViewModel @Inject constructor(
                     reviewWords = wordRepository.getFavoriteWords().first()
                     newWords = emptyList()
                 }
+                LearningType.Test -> {
+                    val testCount = userPreferences.testWordCount.first()
+                    reviewWords = wordRepository.getRandomWords(testCount).first()
+                    newWords = emptyList()
+                }
             }
 
             shuffledAllWords = (newWords + reviewWords).shuffled()
@@ -258,6 +263,24 @@ class LearningViewModel @Inject constructor(
                 currentWord = updatedWord
                 updateWordInLists(updatedWord)
                 refreshCurrentState(updatedWord)
+            }
+        }
+    }
+
+    fun removeFromWrongWords() {
+        currentWord?.let { word ->
+            viewModelScope.launch {
+                wordRepository.removeFromWrongWords(word.id)
+                shuffledAllWords = shuffledAllWords.filter { it.id != word.id }
+                if (shuffledAllWords.isEmpty()) {
+                    _state.value = LearningState.Empty(learningType)
+                } else {
+                    if (flashcardIndex >= shuffledAllWords.size) {
+                        flashcardIndex = shuffledAllWords.size - 1
+                    }
+                    val nextWord = shuffledAllWords[flashcardIndex]
+                    showFlashcard(nextWord, shuffledAllWords.size)
+                }
             }
         }
     }

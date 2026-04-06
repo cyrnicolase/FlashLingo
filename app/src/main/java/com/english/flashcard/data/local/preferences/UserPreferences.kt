@@ -28,6 +28,7 @@ class UserPreferences @Inject constructor(
         private val KEY_DAILY_NEW_WORDS = intPreferencesKey("daily_new_words")
         private val KEY_ONBOARDING_SHOWN = booleanPreferencesKey("onboarding_shown")
         private val KEY_LAST_SYNC_TIMESTAMP = longPreferencesKey("last_sync_timestamp")
+        private val KEY_TEST_WORD_COUNT = intPreferencesKey("test_word_count")
     }
     
     val isDarkMode: Flow<Boolean> = dataStore.data.map { preferences ->
@@ -40,6 +41,10 @@ class UserPreferences @Inject constructor(
     
     val isOnboardingShown: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[KEY_ONBOARDING_SHOWN] ?: false
+    }
+    
+    val testWordCount: Flow<Int> = dataStore.data.map { preferences ->
+        preferences[KEY_TEST_WORD_COUNT] ?: 10
     }
     
     suspend fun getLastSyncTimestamp(): Long {
@@ -67,6 +72,12 @@ class UserPreferences @Inject constructor(
     suspend fun setOnboardingShown(shown: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_ONBOARDING_SHOWN] = shown
+        }
+    }
+    
+    suspend fun setTestWordCount(count: Int) {
+        dataStore.edit { preferences ->
+            preferences[KEY_TEST_WORD_COUNT] = count
         }
     }
 }
