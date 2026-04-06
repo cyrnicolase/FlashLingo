@@ -12,10 +12,11 @@
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21
 
-# Use Make — it runs database conversion automatically
+# Use Make — it runs database conversion automatically before building
 make debug    # convert db → assembleDebug
 make release  # convert db → assembleRelease
-make install  # install to device (requires adb)
+make install  # install debug APK to device (requires adb)
+make clean    # clean build outputs
 
 # Direct Gradle — does NOT convert database
 ./gradlew assembleDebug
@@ -26,6 +27,7 @@ make lint
 ```
 
 **Re-convert DB** when `data/BeiShiGaoZhong_1.json` changes: `python3 scripts/convert_to_sqlite.py`
+(The script reads `data/BeiShiGaoZhong_1.json` and outputs to `app/src/main/assets/database/words.db`)
 
 ## Architecture
 
