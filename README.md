@@ -67,6 +67,8 @@ app/
 
 内置词库位于 `app/src/main/assets/database/words.db`，来源为 JSON 文件 `data/BeiShiGaoZhong_1.json`。
 
+词库数据来自 [english-vocabulary](https://github.com/KyleBing/english-vocabulary)，感谢贡献。
+
 重新转换词库: `python3 scripts/convert_to_sqlite.py`
 
 ## License
