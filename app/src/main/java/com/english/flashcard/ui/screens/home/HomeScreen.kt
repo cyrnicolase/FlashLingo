@@ -45,6 +45,7 @@ import com.english.flashcard.ui.screens.onboarding.OnboardingScreen
 @Composable
 fun HomeScreen(
     onStartLearning: () -> Unit = {},
+    onStartTest: () -> Unit = {},
     onNavigateToWrongWords: () -> Unit = {},
     onNavigateToFavorites: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -99,7 +100,8 @@ fun HomeScreen(
                     date = uiState.todayDate,
                     newWords = uiState.todayNewWords,
                     progressPercent = uiState.todayProgressPercent,
-                    onStartLearning = onStartLearning
+                    onStartLearning = onStartLearning,
+                    onStartTest = onStartTest
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -164,7 +166,8 @@ private fun TodayTaskCard(
     date: String,
     newWords: Int,
     progressPercent: Int,
-    onStartLearning: () -> Unit
+    onStartLearning: () -> Unit,
+    onStartTest: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -249,6 +252,25 @@ private fun TodayTaskCard(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .clickable { onStartTest() }
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "开始测试",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
         }

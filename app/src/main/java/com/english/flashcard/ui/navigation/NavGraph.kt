@@ -37,6 +37,9 @@ fun NavGraph(
                     onStartLearning = {
                         navController.navigate(Screen.Learning.createRoute(LearningType.Today))
                     },
+                    onStartTest = {
+                        navController.navigate(Screen.Learning.createRoute(LearningType.Test))
+                    },
                     onNavigateToWrongWords = {
                         navController.navigate(Screen.Learning.createRoute(LearningType.WrongWords))
                     },
