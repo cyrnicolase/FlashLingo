@@ -80,8 +80,14 @@ class LearningViewModel @Inject constructor(
                 }
                 LearningType.Test -> {
                     val testCount = userPreferences.testWordCount.first()
-                    reviewWords = wordRepository.getRandomWords(testCount).first()
-                    newWords = emptyList()
+                    shuffledAllWords = wordRepository.getRandomWords(testCount).first()
+                    if (shuffledAllWords.isEmpty()) {
+                        _state.value = LearningState.Empty(type)
+                        return@launch
+                    }
+                    currentIndex = 0
+                    showQuiz(shuffledAllWords[0], shuffledAllWords.size, shuffledAllWords)
+                    return@launch
                 }
             }
 
@@ -186,8 +192,10 @@ class LearningViewModel @Inject constructor(
             }
             totalAnswered++
 
-            viewModelScope.launch {
-                updateWordAfterAnswerUseCase(current.word, isCorrect)
+            if (learningType != LearningType.Test) {
+                viewModelScope.launch {
+                    updateWordAfterAnswerUseCase(current.word, isCorrect)
+                }
             }
 
             val encouragingMessage = if (!isCorrect) {
@@ -232,19 +240,21 @@ class LearningViewModel @Inject constructor(
         val durationSeconds = ((System.currentTimeMillis() - startTime) / 1000).toInt()
         val accuracy = if (totalAnswered > 0) correctCount.toFloat() / totalAnswered else 0f
 
-        viewModelScope.launch {
-            val today = LocalDate.now()
-            val existingProgress = wordRepository.getDailyProgressFlow(today.toString()).first()
-            
-            val updatedProgress = DailyProgress(
-                id = existingProgress?.id ?: 0,
-                date = today,
-                newWordsLearned = (existingProgress?.newWordsLearned ?: 0) + newWords.size,
-                wordsReviewed = (existingProgress?.wordsReviewed ?: 0) + totalAnswered,
-                correctCount = (existingProgress?.correctCount ?: 0) + correctCount,
-                totalCount = (existingProgress?.totalCount ?: 0) + totalAnswered
-            )
-            wordRepository.saveDailyProgress(updatedProgress)
+        if (learningType != LearningType.Test) {
+            viewModelScope.launch {
+                val today = LocalDate.now()
+                val existingProgress = wordRepository.getDailyProgressFlow(today.toString()).first()
+                
+                val updatedProgress = DailyProgress(
+                    id = existingProgress?.id ?: 0,
+                    date = today,
+                    newWordsLearned = (existingProgress?.newWordsLearned ?: 0) + newWords.size,
+                    wordsReviewed = (existingProgress?.wordsReviewed ?: 0) + totalAnswered,
+                    correctCount = (existingProgress?.correctCount ?: 0) + correctCount,
+                    totalCount = (existingProgress?.totalCount ?: 0) + totalAnswered
+                )
+                wordRepository.saveDailyProgress(updatedProgress)
+            }
         }
 
         _state.value = LearningState.Completed(
