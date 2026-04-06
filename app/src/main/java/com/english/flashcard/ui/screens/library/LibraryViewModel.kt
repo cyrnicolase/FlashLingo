@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,12 +21,15 @@ class LibraryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadWords()
     }
 
     private fun loadWords() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             wordRepository.getAllWords().collect { words ->
                 val grouped = words
                     .filter { it.word.isNotBlank() }
@@ -52,7 +56,8 @@ class LibraryViewModel @Inject constructor(
     }
 
     private fun searchWords(query: String) {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             wordRepository.searchWords(query).collect { words ->
                 val grouped = words
                     .filter { it.word.isNotBlank() }

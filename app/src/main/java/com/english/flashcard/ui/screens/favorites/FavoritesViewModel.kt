@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,12 +21,15 @@ class FavoritesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FavoritesUiState())
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadFavoriteWords()
     }
 
     private fun loadFavoriteWords() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             wordRepository.getFavoriteWords().collect { words ->
                 _uiState.update {
                     it.copy(

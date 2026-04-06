@@ -12,7 +12,9 @@ import com.english.flashcard.domain.model.Word
 import com.english.flashcard.domain.repository.WordRepository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -50,7 +52,8 @@ class WordRepositoryImpl @Inject constructor(
         }
     
     override fun getNewWordsForToday(limit: Int): Flow<List<Word>> = flow {
-        emit(wordDao.getNewWords(limit).map { it.toDomain() })
+        val maxFetch = maxOf(limit * 3, 100)
+        emit(wordDao.getNewWords(maxFetch).shuffled().take(limit).map { it.toDomain() })
     }
     
     override fun getWordsForReview(): Flow<List<Word>> = flow {
@@ -58,7 +61,8 @@ class WordRepositoryImpl @Inject constructor(
     }
     
     override fun getRandomWords(count: Int): Flow<List<Word>> = flow {
-        emit(wordDao.getRandomWords(count).map { it.toDomain() })
+        val maxFetch = maxOf(count * 3, 100)
+        emit(wordDao.getRandomWords(maxFetch).shuffled().take(count).map { it.toDomain() })
     }
     
     override suspend fun updateWord(word: Word) {
@@ -66,10 +70,7 @@ class WordRepositoryImpl @Inject constructor(
     }
     
     override suspend fun toggleFavorite(wordId: Long) {
-        val word = wordDao.getWordByIdOnce(wordId)
-        word?.let {
-            wordDao.updateFavorite(wordId, !it.isFavorite)
-        }
+        wordDao.toggleFavoriteAtomic(wordId)
     }
 
     override suspend fun removeFromWrongWords(wordId: Long) {
@@ -82,6 +83,14 @@ class WordRepositoryImpl @Inject constructor(
     
     override suspend fun deleteWords(wordIds: List<Long>) {
         wordDao.deleteWords(wordIds)
+    }
+    
+    override suspend fun getWordByText(word: String): Word? {
+        return wordDao.getWordByTextOnce(word)?.toDomain()
+    }
+    
+    override suspend fun getAllWordsOnce(): List<Word> {
+        return wordDao.getAllWords().first().map { entity -> entity.toDomain() }
     }
     
     override fun getFavoriteWordCount(): Flow<Int> =
@@ -105,18 +114,21 @@ fun WordEntity.toDomain(): Word {
     val phraseList: List<Phrase> = try {
         gson.fromJson(phrases, object : TypeToken<List<Phrase>>() {}.type) ?: emptyList()
     } catch (e: Exception) {
+        Log.w("WordRepository", "Failed to parse phrases for word '$word'", e)
         emptyList()
     }
     
     val translationsList: List<Translation> = try {
         gson.fromJson(translations, object : TypeToken<List<Translation>>() {}.type) ?: emptyList()
     } catch (e: Exception) {
+        Log.w("WordRepository", "Failed to parse translations for word '$word'", e)
         emptyList()
     }
     
     val sentencesList: List<Sentence> = try {
         gson.fromJson(sentences, object : TypeToken<List<Sentence>>() {}.type) ?: emptyList()
     } catch (e: Exception) {
+        Log.w("WordRepository", "Failed to parse sentences for word '$word'", e)
         emptyList()
     }
     

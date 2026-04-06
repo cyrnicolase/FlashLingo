@@ -35,6 +35,7 @@ class LearningViewModel @Inject constructor(
     private var totalAnswered = 0
     private var startTime = 0L
     private var learningType: LearningType = LearningType.Today
+    private var learningDate: LocalDate = LocalDate.now()
     private var flashcardIndex = 0
     private var currentWord: Word? = null
     private var shuffledAllWords: List<Word> = emptyList()
@@ -53,6 +54,7 @@ class LearningViewModel @Inject constructor(
     fun startLearning(type: LearningType) {
         learningType = type
         startTime = System.currentTimeMillis()
+        learningDate = LocalDate.now()
         currentIndex = 0
         correctCount = 0
         totalAnswered = 0
@@ -119,6 +121,7 @@ class LearningViewModel @Inject constructor(
     }
 
     fun onPreviousFlashcard() {
+        if (shuffledAllWords.isEmpty()) return
         if (flashcardIndex > 0) {
             flashcardIndex--
             val word = shuffledAllWords[flashcardIndex]
@@ -149,10 +152,10 @@ class LearningViewModel @Inject constructor(
 
     private var quizWords: List<Word> = emptyList()
 
-    private fun showQuiz(word: Word, total: Int, quizWordList: List<Word>) {
-        quizWords = quizWordList
+    private fun showQuiz(word: Word, total: Int, sourceList: List<Word>) {
+        quizWords = sourceList
         currentWord = word
-        val options = generateQuizOptions(word)
+        val options = generateQuizOptions(word, sourceList)
         _state.value = LearningState.Quiz(
             word = word,
             options = options,
@@ -162,23 +165,25 @@ class LearningViewModel @Inject constructor(
         )
     }
 
-    private fun generateQuizOptions(correctWord: Word): List<String> {
-        val sameLetterWords = quizWords.filter {
-            it.id != correctWord.id && it.word.first().lowercaseChar() == correctWord.word.first().lowercaseChar()
+    private fun generateQuizOptions(correctWord: Word, sourceList: List<Word>): List<String> {
+        val sameLetterWords = sourceList.filter {
+            it.id != correctWord.id && it.word.isNotEmpty() && it.word.first().lowercaseChar() == correctWord.word.first().lowercaseChar()
         }
-        val otherWords = quizWords.filter {
-            it.id != correctWord.id && it.word.first().lowercaseChar() != correctWord.word.first().lowercaseChar()
+        val otherWords = sourceList.filter {
+            it.id != correctWord.id && (it.word.isEmpty() || it.word.first().lowercaseChar() != correctWord.word.first().lowercaseChar())
         }
 
-        val distractors = if (sameLetterWords.size >= 3) {
-            sameLetterWords.shuffled().take(3).map { it.meaning }
+        val sameLetterShuffled = sameLetterWords.shuffled()
+        val otherShuffled = otherWords.shuffled()
+
+        val distractors = if (sameLetterShuffled.size >= 3) {
+            sameLetterShuffled.take(3).map { it.meaning }
         } else {
-            val needed = 3 - sameLetterWords.size
-            (sameLetterWords + otherWords.shuffled().take(needed)).shuffled().map { it.meaning }
+            val needed = 3 - sameLetterShuffled.size
+            (sameLetterShuffled + otherShuffled.take(needed)).map { it.meaning }
         }
 
-        val options = (distractors + correctWord.meaning).shuffled()
-        return options
+        return (distractors + correctWord.meaning).shuffled()
     }
 
     fun onSelectAnswer(index: Int) {
@@ -225,15 +230,14 @@ class LearningViewModel @Inject constructor(
     }
 
     fun onPreviousQuestion() {
+        if (quizWords.isEmpty()) return
         if (currentIndex > 0) {
             currentIndex--
             val word = quizWords[currentIndex]
             showQuiz(word, quizWords.size, quizWords)
-        } else {
+        } else if (shuffledAllWords.isNotEmpty()) {
             flashcardIndex = shuffledAllWords.size - 1
-            if (shuffledAllWords.isNotEmpty()) {
-                showFlashcard(shuffledAllWords[flashcardIndex], shuffledAllWords.size)
-            }
+            showFlashcard(shuffledAllWords[flashcardIndex], shuffledAllWords.size)
         }
     }
 
@@ -243,18 +247,21 @@ class LearningViewModel @Inject constructor(
 
         if (learningType != LearningType.Test) {
             viewModelScope.launch {
-                val today = LocalDate.now()
-                val existingProgress = wordRepository.getDailyProgressFlow(today.toString()).first()
-                
-                val updatedProgress = DailyProgress(
-                    id = existingProgress?.id ?: 0,
-                    date = today,
-                    newWordsLearned = (existingProgress?.newWordsLearned ?: 0) + newWords.size,
-                    wordsReviewed = (existingProgress?.wordsReviewed ?: 0) + totalAnswered,
-                    correctCount = (existingProgress?.correctCount ?: 0) + correctCount,
-                    totalCount = (existingProgress?.totalCount ?: 0) + totalAnswered
-                )
-                wordRepository.saveDailyProgress(updatedProgress)
+                try {
+                    val existingProgress = wordRepository.getDailyProgressFlow(learningDate.toString()).first()
+                    
+                    val updatedProgress = DailyProgress(
+                        id = existingProgress?.id ?: 0,
+                        date = learningDate,
+                        newWordsLearned = (existingProgress?.newWordsLearned ?: 0) + newWords.size,
+                        wordsReviewed = (existingProgress?.wordsReviewed ?: 0) + totalAnswered,
+                        correctCount = (existingProgress?.correctCount ?: 0) + correctCount,
+                        totalCount = (existingProgress?.totalCount ?: 0) + totalAnswered
+                    )
+                    wordRepository.saveDailyProgress(updatedProgress)
+                } catch (e: Exception) {
+                    android.util.Log.e("LearningViewModel", "Failed to save progress", e)
+                }
             }
         }
 
@@ -297,6 +304,8 @@ class LearningViewModel @Inject constructor(
     }
 
     private fun updateWordInLists(word: Word) {
+        newWords = newWords.map { if (it.id == word.id) word else it }
+        reviewWords = reviewWords.map { if (it.id == word.id) word else it }
         shuffledAllWords = shuffledAllWords.map { if (it.id == word.id) word else it }
         quizWords = quizWords.map { if (it.id == word.id) word else it }
     }

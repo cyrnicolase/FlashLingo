@@ -31,9 +31,30 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        checkOnboarding()
-        loadData()
-        syncOnStart()
+        viewModelScope.launch {
+            checkOnboarding()
+            loadData()
+            syncOnStart()
+            observeCounts()
+        }
+    }
+
+    private fun observeCounts() {
+        viewModelScope.launch {
+            combine(
+                wordRepository.getFavoriteWordCount(),
+                wordRepository.getMasteredWordCount()
+            ) { favoriteCount, masteredCount ->
+                Pair(favoriteCount, masteredCount)
+            }.collect { (favoriteCount, masteredCount) ->
+                _uiState.update {
+                    it.copy(
+                        favoriteCount = favoriteCount,
+                        masteredCount = masteredCount
+                    )
+                }
+            }
+        }
     }
 
     private fun checkOnboarding() {
@@ -78,22 +99,6 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "加载数据失败"
-                    )
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            combine(
-                wordRepository.getFavoriteWordCount(),
-                wordRepository.getMasteredWordCount()
-            ) { favoriteCount, masteredCount ->
-                Pair(favoriteCount, masteredCount)
-            }.collect { (favoriteCount, masteredCount) ->
-                _uiState.update {
-                    it.copy(
-                        favoriteCount = favoriteCount,
-                        masteredCount = masteredCount
                     )
                 }
             }

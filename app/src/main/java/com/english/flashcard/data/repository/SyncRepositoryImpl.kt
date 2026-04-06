@@ -23,21 +23,33 @@ class SyncRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val data = response.body()?.data
                 if (data != null) {
+                    val existingWords = wordRepository.getAllWordsOnce()
+                    val existingByWord = existingWords.associateBy { it.word }
+                    
                     val words = data.words.map { dto ->
-                        Word(
-                            id = 0,
-                            word = dto.word,
-                            phonetic = dto.phonetic,
-                            meaning = dto.meaning,
-                            isFavorite = false,
-                            isMastered = false,
-                            correctStreak = 0,
-                            wrongCount = 0,
-                            lastReviewAt = null,
-                            nextReviewAt = null,
-                            createdAt = java.time.LocalDateTime.now(),
-                            partOfSpeech = dto.partOfSpeech
-                        )
+                        val existing = existingByWord[dto.word]
+                        if (existing != null) {
+                            existing.copy(
+                                phonetic = dto.phonetic,
+                                meaning = dto.meaning,
+                                partOfSpeech = dto.partOfSpeech
+                            )
+                        } else {
+                            Word(
+                                id = 0,
+                                word = dto.word,
+                                phonetic = dto.phonetic,
+                                meaning = dto.meaning,
+                                isFavorite = false,
+                                isMastered = false,
+                                correctStreak = 0,
+                                wrongCount = 0,
+                                lastReviewAt = null,
+                                nextReviewAt = null,
+                                createdAt = java.time.LocalDateTime.now(),
+                                partOfSpeech = dto.partOfSpeech
+                            )
+                        }
                     }
                     wordRepository.insertWords(words)
                     

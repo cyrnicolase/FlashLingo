@@ -11,7 +11,9 @@ import androidx.room.PrimaryKey
         Index(value = ["word"], unique = true),
         Index(value = ["isFavorite"]),
         Index(value = ["nextReviewAt"]),
-        Index(value = ["isMastered"])
+        Index(value = ["isMastered"]),
+        Index(value = ["wrongCount", "correctStreak"]),
+        Index(value = ["lastReviewAt"])
     ]
 )
 data class WordEntity(

@@ -12,10 +12,11 @@ class UpdateWordAfterAnswerUseCase @Inject constructor(
         val now = LocalDateTime.now()
         val updatedWord = if (isCorrect) {
             val newStreak = word.correctStreak + 1
-            val isNowMastered = newStreak >= 2
-            val nextReview = calculateNextReview(newStreak, now)
+            val cappedStreak = newStreak.coerceAtMost(Int.MAX_VALUE - 1)
+            val isNowMastered = cappedStreak >= 2
+            val nextReview = calculateNextReview(cappedStreak, now)
             word.copy(
-                correctStreak = newStreak,
+                correctStreak = cappedStreak,
                 isMastered = isNowMastered,
                 wrongCount = 0,
                 lastReviewAt = now,

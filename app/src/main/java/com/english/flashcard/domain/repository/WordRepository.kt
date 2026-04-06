@@ -17,6 +17,8 @@ interface WordRepository {
     suspend fun removeFromWrongWords(wordId: Long)
     suspend fun insertWords(words: List<Word>)
     suspend fun deleteWords(wordIds: List<Long>)
+    suspend fun getWordByText(word: String): Word?
+    suspend fun getAllWordsOnce(): List<Word>
     fun getFavoriteWordCount(): Flow<Int>
     fun getMasteredWordCount(): Flow<Int>
     suspend fun saveDailyProgress(progress: DailyProgress)

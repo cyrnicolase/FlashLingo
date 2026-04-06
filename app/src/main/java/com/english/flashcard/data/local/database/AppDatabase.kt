@@ -11,7 +11,7 @@ import com.english.flashcard.data.local.database.entity.WordEntity
 
 @Database(
     entities = [WordEntity::class, DailyProgressEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -45,11 +45,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_words_wrongCount_correctStreak ON words (wrongCount, correctStreak)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_words_lastReviewAt ON words (lastReviewAt)")
+            }
+        }
+        
         fun getMigrations(): Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
-            MIGRATION_4_5
+            MIGRATION_4_5,
+            MIGRATION_5_6
         )
     }
 }

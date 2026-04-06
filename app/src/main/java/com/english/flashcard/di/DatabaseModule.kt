@@ -28,8 +28,8 @@ object DatabaseModule {
             AppDatabase.DATABASE_NAME
         )
             .createFromAsset("database/words.db")
+            .addMigrations(*AppDatabase.getMigrations())
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .fallbackToDestructiveMigration()
             .build()
     }
 
