@@ -4,17 +4,17 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".FlashCardApp"
+        android:name=".FlashLingoApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EnglishFlashCard">
+        android:theme="@style/Theme.FlashLingo">
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.EnglishFlashCard">
+            android:theme="@style/Theme.FlashLingo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

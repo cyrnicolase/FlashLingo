@@ -1,4 +1,4 @@
-# English Flashcard - Agent Instructions
+# FlashLingo - Agent Instructions
 
 ## Environment Requirements
 
