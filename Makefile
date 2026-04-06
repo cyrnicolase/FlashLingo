@@ -1,6 +1,6 @@
 .PHONY: all build debug release clean install test db
 
-JAVA_HOME ?= /Applications/Android\ Studio.app/Contents/jbr/Contents/Home
+JAVA_HOME := /Applications/Android Studio.app/Contents/jbr/Contents/Home
 export JAVA_HOME
 
 all: debug
