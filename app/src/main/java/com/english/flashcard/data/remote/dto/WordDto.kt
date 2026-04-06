@@ -10,7 +10,9 @@ data class WordDto(
     @SerializedName("meaning")
     val meaning: String,
     @SerializedName("example")
-    val example: String?
+    val example: String?,
+    @SerializedName("partOfSpeech")
+    val partOfSpeech: String = ""
 )
 
 data class SyncResponse(

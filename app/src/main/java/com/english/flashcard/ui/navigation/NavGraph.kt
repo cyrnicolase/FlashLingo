@@ -37,9 +37,6 @@ fun NavGraph(
                     onStartLearning = {
                         navController.navigate(Screen.Learning.createRoute(LearningType.Today))
                     },
-                    onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route)
-                    },
                     onNavigateToWrongWords = {
                         navController.navigate(Screen.Learning.createRoute(LearningType.WrongWords))
                     },
@@ -59,7 +56,11 @@ fun NavGraph(
                 )
             }
             composable(Screen.Me.route) {
-                MeScreen()
+                MeScreen(
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route)
+                    }
+                )
             }
             composable(
                 route = Screen.Learning.route,

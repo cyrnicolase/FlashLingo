@@ -61,7 +61,7 @@ class HomeViewModel @Inject constructor(
                 val dailyNewWords = userPreferences.dailyNewWords.first()
                 val todayNewWords = wordRepository.getNewWordsForToday(dailyNewWords).first().size
                 val wrongWordCount = wordRepository.getWrongWords().first().size
-                val favoriteCount = wordRepository.getFavoriteWords().first().size
+                val favoriteCount = wordRepository.getFavoriteWordCount().first()
                 val masteredCount = wordRepository.getMasteredWordCount().first()
 
                 val progress = getDailyProgressUseCase().first()

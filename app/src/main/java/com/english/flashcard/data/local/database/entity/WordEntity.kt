@@ -27,9 +27,6 @@ data class WordEntity(
     @ColumnInfo(name = "meaning")
     val meaning: String,
     
-    @ColumnInfo(name = "example")
-    val example: String = "",
-    
     @ColumnInfo(name = "isFavorite")
     val isFavorite: Boolean = false,
     
@@ -52,5 +49,14 @@ data class WordEntity(
     val createdAt: Long = System.currentTimeMillis(),
     
     @ColumnInfo(name = "phrases")
-    val phrases: String = "[]"
+    val phrases: String = "[]",
+    
+    @ColumnInfo(name = "translations")
+    val translations: String = "[]",
+    
+    @ColumnInfo(name = "sentences")
+    val sentences: String = "[]",
+    
+    @ColumnInfo(name = "partOfSpeech")
+    val partOfSpeech: String = ""
 )

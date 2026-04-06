@@ -27,16 +27,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 userPreferences.isDarkMode,
-                userPreferences.dailyNewWords
-            ) { isDarkMode, dailyNewWords ->
+                userPreferences.dailyNewWords,
+                userPreferences.testWordCount
+            ) { isDarkMode, dailyNewWords, testWordCount ->
                 SettingsUiState(
                     isDarkMode = isDarkMode,
                     dailyNewWords = dailyNewWords,
+                    testWordCount = testWordCount,
                     version = "1.0.0"
                 )
             }.collect { state ->
                 _uiState.value = state
             }
+        }
+    }
+
+    fun setTestWordCount(count: Int) {
+        viewModelScope.launch {
+            userPreferences.setTestWordCount(count)
         }
     }
 

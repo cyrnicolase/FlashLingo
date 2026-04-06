@@ -311,11 +311,12 @@
 │       abstract                      │  ← 单词（大号）
 │       [əbˈstrækt]                  │  ← 音标
 │                                     │
-│       抽象的                        │  ← 释义
+│       adj. 抽象的；摘要的            │  ← 词性 + 释义
+│       n.    摘要；抽象的东西        │
 │                                     │
-│       例句：                        │
-│       An abstract class cannot be   │
-│       instantiated directly.       │  ← 例句
+│       will be able to - 将能够       │  ← 短语
+│       be able to do - 能够做        │
+│       ...                           │
 │                                     │
 │       [ ⭐ 已收藏 ]                 │  ← 收藏按钮
 │                                     │
@@ -388,6 +389,16 @@
 
 **翻转后：**
 
+```
+┌─────────────────────────────┐
+│  adj. 抽象的；摘要的          │  ← 词性 + 释义
+│  n.   摘要；抽象的东西        │
+│                             │
+│  will be able to - 将能够    │  ← 短语
+│  be able to do - 能够做     │
+│                             │
+│       [     下一张     ]    │
+└─────────────────────────────┘
 ```
 ┌─────────────────────────────┐
 │                             │
@@ -678,9 +689,8 @@
 |------|------|------|
 | id | Long | 主键，自增 |
 | word | String | 英文单词（唯一索引） |
-| phonetic | String | 音标 |
-| meaning | String | 中文释义 |
-| example | String | 例句（可为空） |
+| phonetic | String | 美式音标 |
+| meaning | String | 中文释义（取第一个翻译） |
 | isFavorite | Boolean | 是否收藏 |
 | isMastered | Boolean | 是否已掌握 |
 | correctStreak | Int | 连续正确次数 |
@@ -688,6 +698,24 @@
 | lastReviewAt | Long | 上次复习时间（时间戳） |
 | nextReviewAt | Long | 下次复习时间（时间戳） |
 | createdAt | Long | 导入时间（时间戳） |
+| translations | List<Translation> | 翻译列表（含词性） |
+| phrases | List<Phrase> | 短语列表 |
+| sentences | List<Sentence> | 例句列表 |
+| partOfSpeech | String | 词性标签（如 "adj, n"） |
+
+**Translation 数据结构：**
+
+| 字段 | 类型 | 描述 |
+|------|------|------|
+| type | String | 词性（adj, n, v, vi, vt 等） |
+| translation | String | 翻译文本 |
+
+**Sentence 数据结构：**
+
+| 字段 | 类型 | 描述 |
+|------|------|------|
+| sentence | String | 英文例句 |
+| translation | String | 中文翻译 |
 
 **correctStreak 规则：**
 
@@ -782,7 +810,8 @@
         "word": "abstract",
         "phonetic": "əbˈstrækt",
         "meaning": "抽象的",
-        "example": "abstract class"
+        "example": "abstract class",
+        "partOfSpeech": "adj, n"
       }
     ],
     "deleted": ["deprecated-word"],
@@ -798,6 +827,7 @@
 | words | 新增或变更的单词 |
 | deleted | 已删除的单词列表 |
 | syncTimestamp | 本次同步时间戳，客户端存储用于下次请求 |
+| words[].partOfSpeech | 词性标签，多个用逗号分隔（可选） |
 
 **同步流程：**
 
@@ -997,3 +1027,5 @@ APP 启动
 | 2.1 | 2026-04-05 | 测试答对后改为手动「下一题」按钮，不再自动跳转 |
 | 2.2 | 2026-04-05 | 新增学习流程边界处理、设置页面、Onboarding引导、鼓励语池、每日新词数可配置 |
 | 2.3 | 2026-04-05 | 新增「我的」Tab页面，作为第4个底部导航tab |
+| 3.0 | 2026-04-06 | 新增词性展示功能：单词详情页和闪卡背面显示词性+释义对应关系，短语统一显示 |
+| 4.0 | 2026-04-06 | 新词库格式：美式音标、多词性翻译、例句数组、短语数组，移除旧词库 |

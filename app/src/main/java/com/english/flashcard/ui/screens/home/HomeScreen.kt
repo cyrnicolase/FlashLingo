@@ -16,14 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,7 +45,6 @@ import com.english.flashcard.ui.screens.onboarding.OnboardingScreen
 @Composable
 fun HomeScreen(
     onStartLearning: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
     onNavigateToWrongWords: () -> Unit = {},
     onNavigateToFavorites: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
@@ -74,14 +70,6 @@ fun HomeScreen(
                         text = "英语闪卡",
                         fontWeight = FontWeight.Bold
                     )
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "设置"
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background

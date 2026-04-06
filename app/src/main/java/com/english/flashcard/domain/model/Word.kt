@@ -7,7 +7,6 @@ data class Word(
     val word: String,
     val phonetic: String = "",
     val meaning: String,
-    val example: String = "",
     val isFavorite: Boolean = false,
     val isMastered: Boolean = false,
     val correctStreak: Int = 0,
@@ -15,7 +14,10 @@ data class Word(
     val lastReviewAt: LocalDateTime? = null,
     val nextReviewAt: LocalDateTime? = null,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    val phrases: List<Phrase> = emptyList()
+    val phrases: List<Phrase> = emptyList(),
+    val translations: List<Translation> = emptyList(),
+    val sentences: List<Sentence> = emptyList(),
+    val partOfSpeech: String = ""
 ) {
     val isNew: Boolean
         get() = lastReviewAt == null

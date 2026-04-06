@@ -2,6 +2,7 @@ package com.english.flashcard.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.english.flashcard.data.local.database.AppDatabase
 import com.english.flashcard.data.local.database.dao.DailyProgressDao
 import com.english.flashcard.data.local.database.dao.WordDao
@@ -26,6 +27,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
+            .createFromAsset("database/words.db")
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             .fallbackToDestructiveMigration()
             .build()
     }

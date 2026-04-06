@@ -44,6 +44,7 @@ fun WordDetailSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
     var isFlipped by remember { mutableStateOf(false) }
+    var isFavorite by remember { mutableStateOf(word.isFavorite) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -69,13 +70,16 @@ fun WordDetailSheet(
                     )
                 }
                 IconButton(
-                    onClick = onToggleFavorite,
+                    onClick = {
+                        isFavorite = !isFavorite
+                        onToggleFavorite()
+                    },
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
                     Icon(
-                        imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        contentDescription = if (word.isFavorite) "取消收藏" else "收藏",
-                        tint = if (word.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     )
                 }
             }
@@ -185,18 +189,37 @@ private fun FlipCardBack(word: Word) {
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = word.meaning,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-        if (word.example.isNotBlank()) {
+        if (word.translations.isNotEmpty()) {
+            word.translations.forEach { translation ->
+                val posLabel = translation.type?.let { if (it.isNotBlank()) "$it. " else "" } ?: ""
+                Text(
+                    text = "$posLabel${translation.translation}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            Text(
+                text = word.meaning,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+        }
+        if (word.sentences.isNotEmpty()) {
+            val firstSentence = word.sentences.first()
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = word.example,
+                text = firstSentence.sentence,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = firstSentence.translation,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center
             )
         }

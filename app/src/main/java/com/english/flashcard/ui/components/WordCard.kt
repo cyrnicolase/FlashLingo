@@ -27,6 +27,7 @@ import com.english.flashcard.domain.model.Word
 fun WordCard(
     word: Word,
     onClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -74,8 +75,10 @@ fun WordCard(
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                contentDescription = if (word.isFavorite) "Favorite" else "Not favorite",
-                modifier = Modifier.size(24.dp),
+                contentDescription = if (word.isFavorite) "取消收藏" else "收藏",
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable(onClick = onFavoriteClick),
                 tint = if (word.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
         }

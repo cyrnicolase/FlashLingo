@@ -117,18 +117,37 @@ private fun FlashCardBack(word: Word, modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = word.meaning,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-        if (word.example.isNotBlank()) {
+        if (word.translations.isNotEmpty()) {
+            word.translations.forEach { translation ->
+                val posLabel = translation.type?.let { if (it.isNotBlank()) "$it. " else "" } ?: ""
+                Text(
+                    text = "$posLabel${translation.translation}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            Text(
+                text = word.meaning,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+        }
+        if (word.sentences.isNotEmpty()) {
+            val firstSentence = word.sentences.first()
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = word.example,
+                text = firstSentence.sentence,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = firstSentence.translation,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center
             )
         }

@@ -65,6 +65,11 @@ fun SettingsScreen(
                 onValueChange = { viewModel.setDailyNewWords(it) }
             )
 
+            TestWordCountItem(
+                currentValue = uiState.testWordCount,
+                onValueChange = { viewModel.setTestWordCount(it) }
+            )
+
             HorizontalDivider()
 
             SettingsSection(title = "外观设置")
@@ -109,6 +114,49 @@ private fun DailyNewWordsItem(
     ) {
         Text(
             text = "每日新词数",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = currentValue.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.toString()) },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TestWordCountItem(
+    currentValue: Int,
+    onValueChange: (Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf(5, 10, 15, 20, 30)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = "测试词数",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )

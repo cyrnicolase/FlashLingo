@@ -31,13 +31,13 @@ class MeViewModel @Inject constructor(
             combine(
                 getDailyProgressUseCase(),
                 wordRepository.getMasteredWordCount(),
-                wordRepository.getFavoriteWords()
-            ) { dailyProgress, masteredCount, favorites ->
+                wordRepository.getFavoriteWordCount()
+            ) { dailyProgress, masteredCount, favoriteCount ->
                 MeUiState(
-                    todayLearned = dailyProgress.totalWords,
+                    todayLearned = dailyProgress.newWordsLearned,
                     weekStreak = calculateWeekStreak(),
                     totalMastered = masteredCount,
-                    favoriteCount = favorites.size,
+                    favoriteCount = favoriteCount,
                     isLoading = false
                 )
             }.collect { state ->

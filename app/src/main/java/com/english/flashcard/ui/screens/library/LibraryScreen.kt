@@ -141,7 +141,8 @@ fun LibraryScreen(
                             ) { word ->
                                 WordCard(
                                     word = word,
-                                    onClick = { viewModel.onWordClick(word) }
+                                    onClick = { viewModel.onWordClick(word) },
+                                    onFavoriteClick = { viewModel.onToggleFavorite(word.id) }
                                 )
                             }
                         }

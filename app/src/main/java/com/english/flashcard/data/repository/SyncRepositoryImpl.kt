@@ -29,14 +29,14 @@ class SyncRepositoryImpl @Inject constructor(
                             word = dto.word,
                             phonetic = dto.phonetic,
                             meaning = dto.meaning,
-                            example = dto.example ?: "",
                             isFavorite = false,
                             isMastered = false,
                             correctStreak = 0,
                             wrongCount = 0,
                             lastReviewAt = null,
                             nextReviewAt = null,
-                            createdAt = java.time.LocalDateTime.now()
+                            createdAt = java.time.LocalDateTime.now(),
+                            partOfSpeech = dto.partOfSpeech
                         )
                     }
                     wordRepository.insertWords(words)
